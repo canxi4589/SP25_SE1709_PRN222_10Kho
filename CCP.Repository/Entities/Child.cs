@@ -21,7 +21,6 @@ namespace CCP.Repositori.Entities
 
         [Required, StringLength(10)]
         public string Gender { get; set; }
-
         public float? BirthWeight { get; set; }
         public int? GestationalAge { get; set; }
         public AppUser User { get; set; }
