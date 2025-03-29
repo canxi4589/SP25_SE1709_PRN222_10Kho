@@ -24,6 +24,15 @@ namespace CCP.Repositori.Entities
 
         public float? HeadCircumference { get; set; }
 
+        public string? HeightResult { get; set; }
+        public string? HeightResultRating { get; set; }
+        public string? WeightResult { get; set; }
+        public string? WeightResultRating { get; set; }
+        public string? BMIResult { get; set; }
+        public string? BMIResultRaing { get; set; }
+        public string? HeadCircumferenceResult {  get; set; }
+        public string? HeadCircumferenceResultRating {  get; set; }
+
         // Navigation property
         public Child Child { get; set; }
     }

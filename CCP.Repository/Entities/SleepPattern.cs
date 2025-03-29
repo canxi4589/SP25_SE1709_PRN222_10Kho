@@ -26,6 +26,8 @@ namespace CCP.Repositori.Entities
         [StringLength(50)]
         public string? SleepQuality { get; set; }
 
+        public string? SleepQualityRating {  get; set; }
+
         // Navigation property
         public Child Child { get; set; }
     }
