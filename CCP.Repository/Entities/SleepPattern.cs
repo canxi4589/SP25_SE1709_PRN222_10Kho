@@ -27,6 +27,7 @@ namespace CCP.Repositori.Entities
         public string? SleepQuality { get; set; }
 
         public string? SleepQualityRating {  get; set; }
+        public string? Status { get; set; }       //status check if this has been booked for appointment
 
         // Navigation property
         public Child Child { get; set; }
