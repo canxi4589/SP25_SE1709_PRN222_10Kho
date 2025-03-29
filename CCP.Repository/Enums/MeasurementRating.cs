@@ -6,10 +6,33 @@ using System.Threading.Tasks;
 
 namespace CCP.Repositori.Enums
 {
-    public enum MeasurementRating
+    public enum HeightRating
     {
-        Low,
-        Normal,
-        High
+        UnderHeight,
+        NormalHeight,
+        OverHeight
     }
+    public enum BmiRating
+    {
+        ThUnderWeightin,
+        Normal,
+        OverWeight,
+        PreObesity,
+        ObesityI,
+        ObesityII,
+        ObesityIII
+    }
+    public enum WeightRating
+    {
+        UnderWeight,
+        NormalWeight,
+        OverWeight
+    }
+    public enum HeadCircumferenceRating
+    {
+        UnderHeadCircumference,
+        NormalHeadCircumference,
+        OverHeadCircumference
+    }
+
 }
