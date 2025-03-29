@@ -20,6 +20,8 @@ namespace CCP.Repositori.Entities
 
         public float? ServingSize { get; set; }
         public DateTime? RecordDate {  get; set; }
+
+        public string? Status { get; set; }       //status check if this has been booked for appointment
         // Navigation properties
         public Child Child { get; set; }
         public FoodItem FoodItem { get; set; }
