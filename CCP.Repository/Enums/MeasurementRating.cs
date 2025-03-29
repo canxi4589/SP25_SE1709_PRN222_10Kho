@@ -14,7 +14,7 @@ namespace CCP.Repositori.Enums
     }
     public enum BmiRating
     {
-        ThUnderWeightin,
+        UnderWeight,
         Normal,
         OverWeight,
         PreObesity,
