@@ -30,9 +30,7 @@ namespace CCP.Service
                 HeightResult = GetHeightRating(input.Height, heightStandard),
                 WeightResult = GetWeightRating(input.Weight, weightStandard),
                 BMIResult = MeasurementStandards.GetBmiRating(bmi),
-                HeadCircumferenceResult = input.HeadCircumference.HasValue && headStandard > 0
-                    ? GetHeadCircumferenceRating(input.HeadCircumference.Value, headStandard)
-                    : null
+                HeadCircumferenceResult = GetHeadCircumferenceRating(input.HeadCircumference, headStandard),
             };
         }
         private int CalculateAgeFromDateOfBirth(DateTime dob)
