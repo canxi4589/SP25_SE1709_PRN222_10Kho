@@ -1,0 +1,162 @@
+﻿@page "/measurement-history/{childId:guid}"
+
+@using CCP.Repositori.Entities
+@using CCP.Service
+@rendermode InteractiveServer
+@inject IMeasurementService MeasurementService
+@inject NavigationManager NavigationManager
+
+<h1 class="display-4 mb-4 text-center">Measurement History</h1>
+<link href="site.css" rel="stylesheet" />
+@if (child == null || measurements == null)
+{
+    <div class="d-flex justify-content-center align-items-center my-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Child Info -->
+    <div class="d-flex justify-content-center mb-4">
+        <div class="card p-4 shadow-lg animate__animated animate__fadeIn text-center" style="border-radius: 50%; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center;">
+            <div>
+                <h5 class="card-title fw-bold">@child.Name</h5>
+                <p class="card-text">Birthdate: @child.DateOfBirth.ToShortDateString()</p>
+                <p class="card-text">Gender: @child.Gender</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Buttons -->
+    <div class="d-flex justify-content-center gap-3 mb-4">
+        @foreach (var category in Categories)
+        {
+            <button class="btn btn-outline-primary @(selectedCategory == category.Key ? "active" : "")"
+                    @onclick="() => SelectCategory(category.Key)">
+                @category.Value
+            </button>
+        }
+    </div>
+
+    <!-- Measurement Records -->
+    @if (filteredMeasurements.Any())
+    {
+        <div class="container">
+            @foreach (var item in filteredMeasurements)
+            {
+                <div class="card mb-3 shadow-sm animate__animated animate__fadeInUp p-3" style="font-size: 1.25rem; border-left: 8px solid #007bff;">
+                    <div class="card-body">
+                        <h5 class="card-title">📅 Record Date: @item.RecordDate.ToShortDateString() (@GetAgeAtMeasurement(item.RecordDate))</h5>
+                        <p class="card-text">📏 @Categories[selectedCategory]: @GetMeasurementValue(item, selectedCategory)</p>
+                        <p class="card-text">
+                            ✅ Result: <span class="@(IsNormal(GetResult(item, selectedCategory), selectedCategory) ? "text-primary" : "text-danger")">
+                                @GetResult(item, selectedCategory)
+                            </span>
+                        </p>
+                        <p class="card-text">⭐ Rating: @GetRating(item, selectedCategory)</p>
+
+                        @if (ShouldShowConsultationButton(item, selectedCategory))
+                        {
+                            <button class="btn btn-danger animate-vibrate mt-3" @onclick="() => NavigateToConsultation()">Contact our expert now</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-muted text-center">No records found for @Categories[selectedCategory].</p>
+    }
+}
+
+
+@code {
+    [Parameter] public Guid ChildId { get; set; }
+
+    private Child? child;
+    private List<Measurement> measurements = new();
+    private List<Measurement> filteredMeasurements = new();
+    private string selectedCategory = "Height";
+
+    private readonly Dictionary<string, string> Categories = new()
+    {
+        { "Height", "Height" },
+        { "Weight", "Weight" },
+        { "BMI", "BMI" },
+        { "HeadCircumference", "Head Circumference" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        (child, measurements) = await MeasurementService.GetChildWithMeasurementsAsync(ChildId);
+        SelectCategory(selectedCategory);
+    }
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+        filteredMeasurements = measurements
+            .Where(m => GetMeasurementValue(m, category) != null)
+            .OrderByDescending(m => m.RecordDate)
+            .ToList();
+    }
+
+    private object GetMeasurementValue(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.Height.ToString("F2"),
+        "Weight" => measurement.Weight.ToString("F2"),
+        "BMI" => measurement.BMIResult,
+        "HeadCircumference" => measurement.HeadCircumference?.ToString("F2"),
+        _ => null
+    };
+
+    private string? GetResult(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.HeightResult,
+        "Weight" => measurement.WeightResult,
+        "BMI" => measurement.BMIResult.ToString() + " Kg/m2",
+        "HeadCircumference" => measurement.HeadCircumferenceResult,
+        _ => null
+    };
+
+    private string? GetRating(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.HeightResultRating,
+        "Weight" => measurement.WeightResultRating,
+        "BMI" => measurement.BMIResultRaing,
+        "HeadCircumference" => measurement.HeadCircumferenceResultRating,
+        _ => null
+    };
+
+    private bool IsNormal(string? result, string category)
+    {
+        if (category == "BMI")
+        {
+            return result?.Equals("Normal", StringComparison.OrdinalIgnoreCase) ?? false;
+        }
+        return !string.IsNullOrWhiteSpace(result) && result.Equals("Normal", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool ShouldShowConsultationButton(Measurement measurement, string category)
+    {
+        var result = GetResult(measurement, category);
+        var rating = GetRating(measurement, category);
+
+        if (category == "BMI")
+        {
+            return !IsNormal(rating, category);
+        }
+        return !IsNormal(result, category);
+    }
+
+    private string GetAgeAtMeasurement(DateTime recordDate)
+    {
+        var age = recordDate - child!.DateOfBirth;
+        return $"{age.Days / 365} years {age.Days % 365 / 30} months";
+    }
+
+    private void NavigateToConsultation() => NavigationManager.NavigateTo("/consultation-booking");
+}

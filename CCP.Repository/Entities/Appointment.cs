@@ -11,7 +11,7 @@ namespace CCP.Repositori.Entities
     public class Appointment : BaseEntity
     {
         [ForeignKey("AppUser")]
-        public string UserId { get; set; }
+        public string ParentId { get; set; }
 
         [ForeignKey("Child")]
         public Guid ChildId { get; set; }
@@ -23,6 +23,15 @@ namespace CCP.Repositori.Entities
 
         public TimeSpan EndTime { get; set; }
         
+        public Guid? MeasurementId {  get; set; }
+
+        public Guid? PhysicalActivityId {  get; set; }
+
+        public Guid? NutritionalIntake {  get; set; }
+
+        public Guid? SleepPatternId {  get; set; }
+
+
         [Required]
         public DateTime BookingDate { get; set; }
 
