@@ -1,3 +1,4 @@
+using CCP.Service.EmailService;
 using CCPProject.Components;
 using CCPProject.Extension;
 using HCP.Repository.DatabaseExtension;
@@ -9,9 +10,9 @@ var config = builder.Configuration;
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
-
 
 var app = builder.Build();
 
