@@ -4,7 +4,7 @@ using CCP.Service.EmailService;
 using CCPProject.Components;
 using CCPProject.Extension;
 using HCP.Repository.DatabaseExtension;
-
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -19,7 +19,8 @@ builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 builder.Services.AddScoped<IMeasurementService, MeasurementService>();
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
-builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpContextAccessor(); 
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 
@@ -41,5 +42,4 @@ app.MapRazorComponents<App>()
 await app.AddAutoMigrateAndSeedDatabase();
 
 app.Run();
-
 

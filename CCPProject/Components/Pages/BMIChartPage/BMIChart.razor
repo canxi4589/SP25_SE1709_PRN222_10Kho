@@ -1,267 +1,34 @@
 ﻿@page "/bmichart"
 @rendermode InteractiveServer
-@using BlazorBootstrap
 @using CCP.Repositori.Entities
 @using CCP.Repositori.ResultData
+@using MudBlazor
 
-
-@using IgniteUI.Blazor.Controls
-
-<div class="container vertical">
-    <div class="legend-title">
-        Annual Birth Rates by World Region
-    </div>
-    <div class="legend">
-        <IgbLegend
-        Name="legend"
-        @ref="legend"
-        Orientation="LegendOrientation.Horizontal">
-        </IgbLegend>
-
-    </div>
-    <div class="container vertical fill">
-        <IgbDataChart
-        Name="chart"
-        @ref="chart"
-        IsHorizontalZoomEnabled="false"
-        IsVerticalZoomEnabled="false">
-            <IgbCategoryXAxis
-            Name="xAxis"
-            @ref="xAxis"
-            DataSource="ContinentsBirthRate"
-            Label="Year"
-            Gap="0.75">
-            </IgbCategoryXAxis>
-
-            <IgbNumericYAxis
-            Name="yAxis"
-            @ref="yAxis"
-            MinimumValue="0"
-            MaximumValue="140"
-            Interval="20"
-            Title="Millions of Births"
-            TitleAngle="-90"
-            LabelFormat="{0} m">
-            </IgbNumericYAxis>
-
-            <IgbStackedSplineAreaSeries
-            Name="stackedSplineAreaSeries"
-            @ref="stackedSplineAreaSeries"
-            DataSource="ContinentsBirthRate"
-            XAxisName="xAxis"
-            YAxisName="yAxis"
-            ShowDefaultTooltip="false"
-            MarkerType="MarkerType.Circle">
-                <IgbStackedFragmentSeries
-                Name="s1"
-                @ref="s1"
-                ValueMemberPath="Asia"
-                Title="@("Asia")">
-                </IgbStackedFragmentSeries>
-
-                <IgbStackedFragmentSeries
-                Name="s2"
-                @ref="s2"
-                ValueMemberPath="Africa"
-                Title="@("Africa")">
-                </IgbStackedFragmentSeries>
-
-                <IgbStackedFragmentSeries
-                Name="s3"
-                @ref="s3"
-                ValueMemberPath="Europe"
-                Title="@("Europe")">
-                </IgbStackedFragmentSeries>
-
-                <IgbStackedFragmentSeries
-                Name="s4"
-                @ref="s4"
-                ValueMemberPath="NorthAmerica"
-                Title="@("North America")">
-                </IgbStackedFragmentSeries>
-
-                <IgbStackedFragmentSeries
-                Name="s5"
-                @ref="s5"
-                ValueMemberPath="SouthAmerica"
-                Title="@("South America")">
-                </IgbStackedFragmentSeries>
-
-            </IgbStackedSplineAreaSeries>
-
-            <IgbDataToolTipLayer
-            Name="dataToolTipLayer"
-            @ref="dataToolTipLayer">
-            </IgbDataToolTipLayer>
-
-        </IgbDataChart>
-
-    </div>
+<div>
+    <MudChart ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350" ChartOptions="options"></MudChart>
 </div>
 
 @code {
-    
-
-    private Action BindElements { get; set; }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        var legend = this.legend;
-        var chart = this.chart;
-        var xAxis = this.xAxis;
-        var yAxis = this.yAxis;
-        var stackedSplineAreaSeries = this.stackedSplineAreaSeries;
-        var s1 = this.s1;
-        var s2 = this.s2;
-        var s3 = this.s3;
-        var s4 = this.s4;
-        var s5 = this.s5;
-        var dataToolTipLayer = this.dataToolTipLayer;
-
-        this.BindElements = () => {
-            chart.Legend = this.legend;
-        };
-        this.BindElements();
-
-    }
-
-    private IgbLegend legend;
-    private IgbDataChart chart;
-    private IgbCategoryXAxis xAxis;
-    private IgbNumericYAxis yAxis;
-    private IgbStackedSplineAreaSeries stackedSplineAreaSeries;
-    private IgbStackedFragmentSeries s1;
-    private IgbStackedFragmentSeries s2;
-    private IgbStackedFragmentSeries s3;
-    private IgbStackedFragmentSeries s4;
-    private IgbStackedFragmentSeries s5;
-    private IgbDataToolTipLayer dataToolTipLayer;
-
-    private ContinentsBirthRate _continentsBirthRate = null;
-    public ContinentsBirthRate ContinentsBirthRate
-    {
-        get
-        {
-            if (_continentsBirthRate == null)
-            {
-                _continentsBirthRate = new ContinentsBirthRate();
-            }
-            return _continentsBirthRate;
-        }
-    }
-
-}
-
-
-
-
-
-
-
-
-
-@*
-<div class="container-fluid overflow-x-auto">
-    <LineChart @ref="lineChart" Width="800" />
-</div>
-
-@code {
-    private LineChart lineChart = default!;
-    private LineChartOptions lineChartOptions = default!;
-    private ChartData chartData = default!;
-    private List<string> labels = default!;
-    Dictionary<int, float> samplew = MeasurementStandards.MaleWeightStandard;
-    Dictionary<int, float> sampleh = MeasurementStandards.MaleHeightStandard;
-    private Dictionary<int, float> bmiDictionary = new();
-
-    private List<double> bmiValues = new();
-    private List<Measurement> measurements = new()
-    {
-        //recorddate tạm để là thời gian giảm dần phỏng cho tuổi tăng dần
-        new Measurement { RecordDate = new DateTime(2016, 1, 1), Height = 1.5f, Weight = 45f },
-        new Measurement { RecordDate = new DateTime(2015, 2, 1), Height = 1.51f, Weight = 46f },
-        new Measurement { RecordDate = new DateTime(2014, 3, 1), Height = 1.52f, Weight = 47f },
-        new Measurement { RecordDate = new DateTime(2013, 4, 1), Height = 1.53f, Weight = 48f },
-        new Measurement { RecordDate = new DateTime(2012, 5, 1), Height = 1.54f, Weight = 48f },
-        new Measurement { RecordDate = new DateTime(2011, 6, 1), Height = 1.55f, Weight = 48f },
-        new Measurement { RecordDate = new DateTime(2010, 7, 1), Height = 1.56f, Weight = 49f },
-        new Measurement { RecordDate = new DateTime(2009, 8, 1), Height = 1.57f, Weight = 49f },
-        new Measurement { RecordDate = new DateTime(2008, 9, 1), Height = 1.58f, Weight = 50f },
-        new Measurement { RecordDate = new DateTime(2007, 10, 1), Height = 1.59f, Weight = 55f },
-        new Measurement { RecordDate = new DateTime(2006, 11, 1), Height = 1.6f, Weight = 61f },
-        new Measurement { RecordDate = new DateTime(2005, 12, 1), Height = 1.67f, Weight = 67f }
-    };
+    private ChartOptions options = new ChartOptions();
+    public List<ChartSeries> Series = new List<ChartSeries>();
+    public string[] XAxisLabels;
 
     protected override void OnInitialized()
     {
-        labels = measurements.Select(m => (m.RecordDate.Year - DateTime.Now.Year).ToString()).ToList();
-        bmiValues = measurements.Select(m => CalculateBMI(m.Height, m.Weight)).ToList();
-        lineChartOptions = GetLineChartOptions();
-        chartData = new ChartData { Labels = labels, Datasets = GetDefaultDatasets() };
-        for (int i = 1; i <= 10; i++)
-        {
-            if (samplew.ContainsKey(i) && sampleh.ContainsKey(i))
-            {
-                bmiDictionary[i] = samplew[i] * sampleh[i];
-            }
-        }
-    }
+        options.InterpolationOption = InterpolationOption.NaturalSpline;
+        options.YAxisFormat = "F2";
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-            await lineChart.InitializeAsync(chartData, lineChartOptions);
-        await base.OnAfterRenderAsync(firstRender);
-    }
+        // Prepare data for the chart
+        var maleHeightData = MeasurementStandards.MaleHeightStandard.Values.Select(h => (double)h).ToArray();
+        var femaleHeightData = MeasurementStandards.FemaleHeightStandard.Values.Select(h => (double)h).ToArray();
+        var ageLabels = MeasurementStandards.MaleHeightStandard.Keys.Select(k => k.ToString()).ToArray();
 
-    private List<IChartDataset> GetDefaultDatasets()
-    {
-        var datasets = new List<IChartDataset>
+        Series = new List<ChartSeries>
         {
-            new LineChartDataset
-            {
-                Label = "BMI",
-                Data = bmiValues.Cast<double?>().ToList(),
-                BackgroundColor = "rgb(88, 80, 141)",
-                BorderColor = "rgb(88, 80, 141)",
-                BorderWidth = 2,
-                HoverBorderWidth = 4,
-            }
+            new ChartSeries { Name = "Male Height", Data = maleHeightData },
+            new ChartSeries { Name = "Female Height", Data = femaleHeightData }
         };
 
-        return datasets;
-    }
-
-    private LineChartOptions GetLineChartOptions()
-    {
-        var options = new LineChartOptions
-        {
-            Interaction = new Interaction { Mode = InteractionMode.Index },
-            Plugins = new LineChartPlugins
-            {
-                Title = new ChartPluginsTitle { Text = "BMI Over Time", Display = true, Font = new ChartFont { Size = 20 } }
-            },
-            Responsive = true,
-            Scales = new Scales
-            {
-                X = new ChartAxes
-                {
-                    Title = new ChartAxesTitle { Text = "Age", Display = true }
-                },
-                Y = new ChartAxes
-                {
-                    Title = new ChartAxesTitle { Text = "BMI", Display = true },
-                    SuggestedMax = 25
-                }
-            }
-        };
-
-        return options;
-    }
-
-    private double CalculateBMI(float height, float weight)
-    {
-        return weight / (height * height);
+        XAxisLabels = ageLabels;
     }
 }
-*@
