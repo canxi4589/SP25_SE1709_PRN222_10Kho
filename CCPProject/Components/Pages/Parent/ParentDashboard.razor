@@ -1,6 +1,9 @@
 ﻿@page "/parent-dashboard"
+@using CCP.Repositori.Entities
+@using CCP.Service
 @using CCPProject.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
+@inject IMeasurementService MeasurementService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
@@ -10,16 +13,15 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar Component -->
-            <Sideboard 
-                UserAvatar="@userAvatar" 
-                UserFullName="@userFullName" 
-                BirthDate="@birthDate" 
-                Age="@age" 
-                Location="@location" 
-                ActiveTab="@activeTab" 
-                UnreadMessages="@unreadMessages" 
-                OnTabSelected="SetActiveTab" 
-                OnLogout="Logout" />
+            <Sideboard UserAvatar="@userAvatar"
+            UserFullName="@userFullName"
+            BirthDate="@birthDate"
+            Age="@age"
+            Location="@location"
+            ActiveTab="@activeTab"
+            UnreadMessages="@unreadMessages"
+            OnTabSelected="SetActiveTab"
+            OnLogout="Logout" />
 
             <!-- Main Content -->
             <div class="col-md-7 col-lg-8 col-xl-9">
@@ -101,7 +103,6 @@
                                         </div>
                                     </div>
                                 }
-
                                 <!-- Prescription Tab -->
                                 @if (activeContentTab == "Prescriptions")
                                 {
@@ -138,14 +139,122 @@
                         </div>
                     </div>
                 }
-                else if (activeTab == "Favourites")
+                else if (activeTab == "Measurement History")
                 {
-                    <div class="card">
-                        <div class="card-body">
-                            <h3>Favourites</h3>
-                            <p>Your favorite doctors or content here.</p>
+                    @if (child == null)
+                    {
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Select a Child</h5>
+                                <div class="list-group">
+                                    @foreach (var c in children)
+                                    {
+                                        <a href="javascript:void(0);" class="list-group-item list-group-item-action" @onclick="() => SelectChild(c.Id)">
+                                            <h5 class="mb-1">@c.Name</h5>
+                                            <small>Birthdate: @c.DateOfBirth.ToShortDateString()</small>
+                                        </a>
+                                    }
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        @* Show Measurement History *@
+                        @if (activeTab == "Measurement History")
+                        {
+                            <div class="card">
+                                <div class="card-body pt-0">
+                                    <!-- Tab Menu -->
+                                    <nav class="user-tabs mb-4">
+                                        <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
+                                            @foreach (var category in Categories)
+                                            {
+                                                <li class="nav-item">
+                                                    <a class="nav-link @(selectedCategory == category.Key ? "active" : "")" @onclick="() => SelectCategory(category.Key)">
+                                                        @category.Value
+                                                    </a>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </nav>
+
+                                    <!-- Tab Content -->
+                                    <div class="tab-content pt-0">
+                                        <div class="tab-pane fade show active">
+                                            <div class="card card-table mb-0">
+                                                <div class="card-body">
+                                                    @if (measurements == null)
+                                                    {
+                                                        <div class="d-flex justify-content-center align-items-center my-5">
+                                                            <div class="spinner-border text-primary" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <!-- Child Info -->
+                                                        <div class="d-flex justify-content-center mb-4">
+                                                            <div class="card p-4 shadow-lg text-center" style="border-radius: 50%; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                                                <div>
+                                                                    <h5 class="card-title fw-bold">@child.Name</h5>
+                                                                    <p class="card-text">Birthdate: @child.DateOfBirth.ToShortDateString()</p>
+                                                                    <p class="card-text">Gender: @child.Gender</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        @if (filteredMeasurements.Any())
+                                                        {
+                                                            <div class="table-responsive">
+                                                                <table class="table table-hover table-center mb-0">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Record Date</th>
+                                                                            <th>@Categories[selectedCategory]</th>
+                                                                            <th>Result</th>
+                                                                            <th>Rating</th>
+                                                                            <th>Consultation</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach (var item in filteredMeasurements)
+                                                                        {
+                                                                            <tr>
+                                                                                <td>@item.RecordDate.ToShortDateString()</td>
+                                                                                <td>@GetMeasurementValue(item, selectedCategory)</td>
+                                                                                <td class="@(IsNormal(GetResult(item, selectedCategory), selectedCategory) ? "text-primary" : "text-danger")">
+                                                                                    @GetResult(item, selectedCategory)
+                                                                                </td>
+                                                                                <td>@GetRating(item, selectedCategory)</td>
+                                                                                <td>
+                                                                                    @if (ShouldShowConsultationButton(item, selectedCategory))
+                                                                                    {
+                                                                                        <a href="javascript:void(0);" class="btn btn-sm bg-danger-light" @onclick="() => NavigateToConsultation()">
+                                                                                            <i class="fas fa-exclamation-circle"></i> Consult
+                                                                                        </a>
+                                                                                    }
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <p class="text-muted text-center">No records found for @Categories[selectedCategory].</p>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
                 }
                 else if (activeTab == "Messages")
                 {
@@ -189,9 +298,18 @@
     private string activeContentTab = "Appointments"; // Tab content selection
     private int unreadMessages = 23;
     private List<Appointment> Appointments { get; set; } = new();
+    [Parameter] public Guid ChildId { get; set; }
+    private List<Child> children = new();
+    private Child? child { get; set; }
+    private List<Measurement> measurements = new();
+    private List<Measurement> filteredMeasurements = new();
+    private string selectedCategory = "Height";
 
     protected override async Task OnInitializedAsync()
     {
+        children = await MeasurementService.GetChildrenByParent(Guid.Parse("f1854b09-f097-442e-9917-67e95ffb1e34"));
+        SelectCategory(selectedCategory);
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         if (user.Identity?.IsAuthenticated ?? false)
@@ -203,6 +321,14 @@
             age = CalculateAge(birthDate);
         }
         LoadSampleData();
+    }
+
+    private async Task SelectChild(Guid childId)
+    {
+        (child, measurements) = await MeasurementService.GetChildWithMeasurementsAsync(childId);
+        selectedCategory = Categories.Keys.FirstOrDefault();
+        SelectCategory(selectedCategory);
+        StateHasChanged();
     }
 
     private void LoadSampleData()
@@ -252,4 +378,73 @@
         public string Status { get; set; } = "";
         public string StatusClass { get; set; } = "";
     }
+
+
+    private readonly Dictionary<string, string> Categories = new()
+    {
+        { "Height", "Height" },
+        { "Weight", "Weight" },
+        { "BMI", "BMI" },
+        { "HeadCircumference", "Head Circumference" }
+    };
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+        filteredMeasurements = measurements
+            .Where(m => GetMeasurementValue(m, category) != null)
+            .OrderByDescending(m => m.RecordDate)
+            .ToList();
+        StateHasChanged();
+    }
+
+    private object GetMeasurementValue(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.Height.ToString("F2"),
+        "Weight" => measurement.Weight.ToString("F2"),
+        "BMI" => measurement.BMIResult,
+        "HeadCircumference" => measurement.HeadCircumference?.ToString("F2"),
+        _ => null
+    };
+
+    private string? GetResult(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.HeightResult,
+        "Weight" => measurement.WeightResult,
+        "BMI" => measurement.BMIResult.ToString() + " Kg/m2",
+        "HeadCircumference" => measurement.HeadCircumferenceResult,
+        _ => null
+    };
+
+    private string? GetRating(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.HeightResultRating,
+        "Weight" => measurement.WeightResultRating,
+        "BMI" => measurement.BMIResultRaing,
+        "HeadCircumference" => measurement.HeadCircumferenceResultRating,
+        _ => null
+    };
+
+    private bool IsNormal(string? result, string category)
+    {
+        if (category == "BMI")
+        {
+            return result?.Equals("Normal", StringComparison.OrdinalIgnoreCase) ?? false;
+        }
+        return !string.IsNullOrWhiteSpace(result) && result.Equals("Normal", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool ShouldShowConsultationButton(Measurement measurement, string category)
+    {
+        var result = GetResult(measurement, category);
+        var rating = GetRating(measurement, category);
+
+        if (category == "BMI")
+        {
+            return !IsNormal(rating, category);
+        }
+        return !IsNormal(result, category);
+    }
+
+    private void NavigateToConsultation() => NavigationManager.NavigateTo("/consultation-booking");
 }
