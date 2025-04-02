@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CCP.Repository\CCP.Repositori.csproj" />
     <ProjectReference Include="..\CCP.Service\CCP.Service.csproj" />
   </ItemGroup>
 

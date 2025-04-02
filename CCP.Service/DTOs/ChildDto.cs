@@ -13,5 +13,11 @@ namespace CCP.Service.DTOs
         public string Name { get; set; }
         public string Gender { get; set; }
         public DateTime DateOfBirth { get; set; }
+        public List<PhysicalActivityDto>? PhysicalActivities { get; set; }
+        public List<SleepPatternDto>? SleepPatterns { get; set; }
+        public List<HealthMetricDto>? HealthMetrics { get; set; }
+        public List<NutritionalIntakeDto>? NutritionalIntakes { get; set; }
+
+
     }
 }

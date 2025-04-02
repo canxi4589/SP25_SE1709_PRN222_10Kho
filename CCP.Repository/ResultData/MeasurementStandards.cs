@@ -51,7 +51,53 @@ namespace CCP.Repositori.ResultData
             {11, 52.2f}, {12, 52.4f}, {13, 52.5f}, {14, 52.6f}, {15, 52.7f},
             {16, 52.8f}, {17, 52.9f}, {18, 53.0f}, {19, 53.0f}, {20, 53.0f}
         };
+        public static readonly Dictionary<int, float> BmiUnderWeightStandard = new()
+        {
+            {1, 14.0f}, {2, 14.2f}, {3, 14.5f}, {4, 14.7f}, {5, 14.9f},
+            {6, 15.0f}, {7, 15.2f}, {8, 15.4f}, {9, 15.5f}, {10, 15.6f},
+            {11, 15.7f}, {12, 15.8f}, {13, 16.0f}, {14, 16.2f}, {15, 16.4f},
+            {16, 16.5f}, {17, 16.6f}, {18, 16.7f}, {19, 16.8f}, {20, 17.0f}
+        };
 
+        public static readonly Dictionary<int, float> BmiOverWeightStandard = new()
+        {
+            {1, 18.6f}, {2, 18.8f}, {3, 19.0f}, {4, 19.2f}, {5, 19.4f},
+            {6, 19.6f}, {7, 19.8f}, {8, 20.0f}, {9, 20.2f}, {10, 20.4f},
+            {11, 20.6f}, {12, 20.8f}, {13, 21.0f}, {14, 21.2f}, {15, 21.4f},
+            {16, 21.6f}, {17, 21.8f}, {18, 22.0f}, {19, 22.2f}, {20, 22.4f}
+        };
+
+        public static readonly Dictionary<int, float> BmiPreObesityStandard = new()
+        {
+            {1, 24.9f}, {2, 25.1f}, {3, 25.3f}, {4, 25.5f}, {5, 25.7f},
+            {6, 25.9f}, {7, 26.1f}, {8, 26.3f}, {9, 26.5f}, {10, 26.7f},
+            {11, 26.9f}, {12, 27.0f}, {13, 27.2f}, {14, 27.4f}, {15, 27.6f},
+            {16, 27.8f}, {17, 28.0f}, {18, 28.2f}, {19, 28.4f}, {20, 28.5f}
+        };
+
+        public static readonly Dictionary<int, float> BmiObesityIStandard = new()
+        {
+            {1, 30.0f}, {2, 30.5f}, {3, 31.0f}, {4, 31.5f}, {5, 32.0f},
+            {6, 32.5f}, {7, 33.0f}, {8, 33.5f}, {9, 34.0f}, {10, 34.5f},
+            {11, 35.0f}, {12, 35.5f}, {13, 36.0f}, {14, 36.5f}, {15, 37.0f},
+            {16, 37.5f}, {17, 38.0f}, {18, 38.5f}, {19, 39.0f}, {20, 39.5f}
+        };
+
+        public static readonly Dictionary<int, float> BmiObesityIIStandard = new()
+        {
+            {1, 35.0f}, {2, 35.5f}, {3, 36.0f}, {4, 36.5f}, {5, 37.0f},
+            {6, 37.5f}, {7, 38.0f}, {8, 38.5f}, {9, 39.0f}, {10, 39.5f},
+            {11, 40.0f}, {12, 40.5f}, {13, 41.0f}, {14, 41.5f}, {15, 42.0f},
+            {16, 42.5f}, {17, 43.0f}, {18, 43.5f}, {19, 44.0f}, {20, 44.5f}
+        };
+
+        public static readonly Dictionary<int, float> BmiObesityIIIStandard = new()
+        {
+            {1, 40.0f}, {2, 41.0f}, {3, 42.0f}, {4, 43.0f}, {5, 44.0f},
+            {6, 45.0f}, {7, 46.0f}, {8, 47.0f}, {9, 48.0f}, {10, 49.0f},
+            {11, 50.0f}, {12, 51.0f}, {13, 52.0f}, {14, 53.0f}, {15, 54.0f},
+            {16, 55.0f}, {17, 56.0f}, {18, 57.0f}, {19, 58.0f}, {20, 59.0f}
+        };
         public static BmiRating GetBmiRating(float bmi)
         {
             return bmi switch
