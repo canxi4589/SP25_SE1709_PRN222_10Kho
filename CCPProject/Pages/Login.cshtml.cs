@@ -8,10 +8,12 @@ namespace CCPProject.Pages
     public class LoginProcessModel : PageModel
     {
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly UserManager<AppUser> _userManager;
 
-        public LoginProcessModel(SignInManager<AppUser> signInManager)
+        public LoginProcessModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager)
         {
             _signInManager = signInManager;
+            _userManager = userManager;
         }
 
         public string ErrorMessage { get; set; } = string.Empty;
@@ -36,9 +38,17 @@ namespace CCPProject.Pages
             if (result.Succeeded)
             {
                 user.LastLogin = DateTime.Now;
-                await _signInManager.UserManager.UpdateAsync(user);
+                await _userManager.UpdateAsync(user);
+
+                // Check if the user is an admin
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    return Redirect("/admin-dashboard");
+                }
+
                 return Redirect("/");
             }
+
             else if (result.IsLockedOut)
             {
                 ErrorMessage = "Your account is locked out. Please try again later or contact support.";
