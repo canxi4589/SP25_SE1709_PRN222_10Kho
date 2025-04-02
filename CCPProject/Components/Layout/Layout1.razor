@@ -47,40 +47,78 @@
                         <i class="fas fa-times"></i>
                     </a>
                 </div>
-                <ul class="main-nav">
-                    <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Home</a></li>
-                    <li class="has-submenu @(activeMenu == "Doctors" ? "active" : "")">
-                        <a @onclick='() => ToggleSubmenu("Doctors")' @onclick:preventDefault>Doctors <i class="fas fa-chevron-down"></i></a>
-                        @if (activeMenu == "Doctors")
+                @if (userRole == "Expert")
+                {
+                    <ul class="main-nav">
+                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Home</a></li>
+
+                        @if (isAuthenticated)
                         {
-                            <ul class="submenu show">
-                                <li><a @onclick='() => NavigateTo("/doctor-dashboard")' @onclick:preventDefault>Doctor Dashboard</a></li>
-                                <li><a @onclick='() => NavigateTo("/appointments")' @onclick:preventDefault>Appointments</a></li>
-                                <li><a @onclick='() => NavigateTo("/my-patients")' @onclick:preventDefault>Patients List</a></li>
-                            </ul>
+                            <li><a @onclick="Logout" @onclick:preventDefault>Logout</a></li>
                         }
-                    </li>
-                    <li class="has-submenu @(activeMenu == "Patients" ? "active" : "")">
-                        <a @onclick='() => ToggleSubmenu("Patients")' @onclick:preventDefault>Patients <i class="fas fa-chevron-down"></i></a>
-                        @if (activeMenu == "Patients")
+                        else
                         {
-                            <ul class="submenu show">
-                                <li><a @onclick='() => NavigateTo("/search")' @onclick:preventDefault>Search Doctor</a></li>
-                                <li><a @onclick='() => NavigateTo("/doctor-profile")' @onclick:preventDefault>Doctor Profile</a></li>
-                                <li><a @onclick='() => NavigateTo("/booking")' @onclick:preventDefault>Booking</a></li>
-                                <li><a @onclick='() => NavigateTo("/patient-dashboard")' @onclick:preventDefault>Patient Dashboard</a></li>
-                            </ul>
+                            <li class="login-link"><a @onclick='() => NavigateTo("/login")' @onclick:preventDefault>Login / Signup</a></li>
                         }
-                    </li>
-                    @if (isAuthenticated)
-                    {
-                        <li><a @onclick="Logout" @onclick:preventDefault>Logout</a></li>
-                    }
-                    else
-                    {
-                        <li class="login-link"><a @onclick='() => NavigateTo("/login")' @onclick:preventDefault>Login / Signup</a></li>
-                    }
-                </ul>
+                    </ul>
+                }
+                else if (userRole == "Parent")
+                {
+                    <ul class="main-nav">
+                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Home</a></li>
+                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Measure Your Child</a></li>
+                        <li><a @onclick='() => NavigateTo("/expert-list")' @onclick:preventDefault>Expert List</a></li>
+                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Blog</a></li>
+                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>FAQ</a></li>
+
+                        
+                        @if (isAuthenticated)
+                        {
+                            <li><a @onclick="Logout" @onclick:preventDefault>Logout</a></li>
+                        }
+                        else
+                        {
+                            <li class="login-link"><a @onclick='() => NavigateTo("/login")' @onclick:preventDefault>Login / Signup</a></li>
+                        }
+                    </ul>
+                }
+                else{
+                    <ul class="main-nav">
+                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Home</a></li>
+                        <li class="has-submenu @(activeMenu == "Doctors" ? "active" : "")">
+                            <a @onclick='() => ToggleSubmenu("Doctors")' @onclick:preventDefault>Doctors <i class="fas fa-chevron-down"></i></a>
+                            @if (activeMenu == "Doctors")
+                            {
+                                <ul class="submenu show">
+                                    <li><a @onclick='() => NavigateTo("/doctor-dashboard")' @onclick:preventDefault>Doctor Dashboard</a></li>
+                                    <li><a @onclick='() => NavigateTo("/appointments")' @onclick:preventDefault>Appointments</a></li>
+                                    <li><a @onclick='() => NavigateTo("/my-patients")' @onclick:preventDefault>Patients List</a></li>
+                                </ul>
+                            }
+                        </li>
+                        <li class="has-submenu @(activeMenu == "Patients" ? "active" : "")">
+                            <a @onclick='() => ToggleSubmenu("Patients")' @onclick:preventDefault>Expert <i class="fas fa-chevron-down"></i></a>
+                            @if (activeMenu == "Patients")
+                            {
+                                <ul class="submenu show">
+                                    <li><a @onclick='() => NavigateTo("/search")' @onclick:preventDefault>Search Doctor</a></li>
+                                    <li><a @onclick='() => NavigateTo("/expert-list")' @onclick:preventDefault>Doctor Profile</a></li>
+                                    <li><a @onclick='() => NavigateTo("/booking")' @onclick:preventDefault>Booking</a></li>
+                                    <li><a @onclick='() => NavigateTo("/parent-dashboard")' @onclick:preventDefault>Patient Dashboard</a></li>
+                                </ul>
+                            }
+                        </li>
+                        @if (isAuthenticated)
+                        {
+                            <li><a @onclick="Logout" @onclick:preventDefault>Logout</a></li>
+                        }
+                        else
+                        {
+                            <li class="login-link"><a @onclick='() => NavigateTo("/login")' @onclick:preventDefault>Login / Signup</a></li>
+                        }
+                    </ul>
+
+                }
             </div>
             <ul class="nav header-navbar-rht">
                 <li class="nav-item contact-item">
