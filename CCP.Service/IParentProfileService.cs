@@ -4,12 +4,13 @@ namespace CCP.Service
 {
     public interface IParentProfileService
     {
-        Task<IEnumerable<ChildDto>> GetChildrenAsync(string userId);
-        Task<ChildDto?> GetChildByIdAsync(Guid childId, string userId);
-        Task<ChildDto> CreateChildAsync(string userId, ChildDto dto);
-        Task<ChildDto?> UpdateChildAsync(Guid childId, string userId, ChildDto dto);
-        Task<bool> DeleteChildAsync(Guid childId, string userId);
-        Task<ParentDto?> GetParentProfileAsync(string userId);
-        Task<bool> UpdateParentProfileAsync(string userId, ParentDto dto);
+        Task<IEnumerable<ChildDto>> GetChildrenAsync(Guid userId);
+        Task<ChildDto?> GetChildByIdAsync(Guid childId, Guid userId);
+        Task<ChildDto> CreateChildAsync(Guid userId, ChildDto dto);
+        Task<ChildDto?> UpdateChildAsync(Guid childId, Guid userId, ChildDto dto);
+        Task<bool> DeleteChildAsync(Guid childId, Guid userId);
+        Task<ParentDto?> GetParentProfileAsync(Guid userId);
+        Task<Guid?> GetParentProfileIdAsync(string email);
+        Task<bool> UpdateParentProfileAsync(Guid userId, ParentDto dto);
     }
 }
