@@ -30,7 +30,6 @@
 <link rel="stylesheet" href="assets/css/style.css">
 
 <div class="main-wrapper">
-   
 
     <!-- Page Content -->
     <div class="content">
@@ -48,7 +47,7 @@
                                     <h3>@(userFullName ?? "Richard Wilson")</h3>
                                     <div class="patient-details">
                                         <h5><i class="fas fa-birthday-cake"></i> @(birthDate ?? "24 Jul 1983"), @(age ?? 38) years</h5>
-                                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> @(location ?? "Newyork, USA")</h5>
+                                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> @(email ?? string.Empty)</h5>
                                     </div>
                                 </div>
                             </div>
@@ -68,28 +67,14 @@
                                             <span>Measurement History</span>
                                         </a>
                                     </li>
-                                    <li class="@(activeTab == "Messages" ? "active" : "")">
-                                        <a @onclick='() => SetActiveTab("Messages")'>
-                                            <i class="fas fa-comments"></i>
-                                            <span>Messages</span>
-                                            @if (unreadMessages > 0)
-                                            {
-                                                <small class="unread-msg">@unreadMessages</small>
-                                            }
-                                        </a>
-                                    </li>
+                                    
                                     <li class="@(activeTab == "Parent Profile" ? "active" : "")">
                                         <a @onclick='() => NavigateToParentProfile()'>
                                             <i class="fas fa-user"></i>
                                             <span>Parent Profile</span>
                                         </a>
                                     </li>
-                                    <li class="@(activeTab == "Profile" ? "active" : "")">
-                                        <a @onclick='() => SetActiveTab("Profile")'>
-                                            <i class="fas fa-user-cog"></i>
-                                            <span>Profile Settings</span>
-                                        </a>
-                                    </li>
+                                    
                                     <li class="@(activeTab == "Password" ? "active" : "")">
                                         <a @onclick='() => SetActiveTab("Password")'>
                                             <i class="fas fa-lock"></i>
@@ -163,6 +148,9 @@
                                                         <td>
                                                             <button class="btn btn-primary btn-sm" @onclick="() => EditChild(child.Id.Value)">Edit</button>
                                                             <button class="btn btn-danger btn-sm" @onclick="() => DeleteChild(child.Id.Value)">Delete</button>
+                                                            <button class="btn btn-info btn-sm" @onclick="() => ViewHistory(child.Id.Value)">
+                                                                <i class="fas fa-history"></i> View History
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 }
@@ -206,7 +194,7 @@
     private string activeTab = "Parent Profile"; // Set default to Parent Profile
     private string? birthDate = null;
     private int? age = null;
-    private string? location = null;
+    private string? email = null;
     private int unreadMessages = 0;
     public List<BreadcrumbItem> Breadcrumbs { get; set; } = new();
     public string? BreadcrumbTitle { get; set; }
@@ -220,6 +208,8 @@
         var user = authState.User;
         isAuthenticated = user.Identity?.IsAuthenticated ?? false;
 
+
+
         if (isAuthenticated)
         {
             userName = user.Identity?.Name ?? "User";
@@ -228,7 +218,6 @@
             userAvatar = user.FindFirst("avatar")?.Value ?? "assets/img/patients/patient.jpg";
             birthDate = user.FindFirst("birthdate")?.Value;
             age = user.FindFirst("age")?.Value != null ? int.Parse(user.FindFirst("age")?.Value) : null;
-            location = user.FindFirst("location")?.Value;
 
             // Get user ID from claims (assuming it's stored there)
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -241,6 +230,10 @@
                     parentProfile.Children = (await ParentProfileService.GetChildrenAsync(parsedUserId)).ToList();
                 }
             }
+            birthDate = parentProfile.DateOfBirth.ToString();
+            age = CalculateAge(birthDate);
+            email = parentProfile.Email;
+
         }
 
         if (!Breadcrumbs.Any())
@@ -262,7 +255,17 @@
     private void NavigateTo(string uri) => NavigationManager.NavigateTo(uri);
     private void SetActiveTab(string tab) { activeTab = tab; StateHasChanged(); }
     private void NavigateToParentProfile() => NavigationManager.NavigateTo("/parent-profile");
-
+    private int CalculateAge(string? birthDateStr)
+    {
+        if (DateTime.TryParse(birthDateStr, out var birth))
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birth.Year;
+            if (birth > today.AddYears(-age)) age--;
+            return age;
+        }
+        return 38;
+    }
     private async Task Logout()
     {
         NavigationManager.NavigateTo("/signout", forceLoad: true);
@@ -298,4 +301,9 @@
         public string Url { get; set; } = "";
         public bool IsActive { get; set; }
     }
+    private void ViewHistory(Guid childId)
+{
+    NavigationManager.NavigateTo($"/parent-dashboard?childId={childId}&tab=MeasurementHistory");
+}
+
 }
