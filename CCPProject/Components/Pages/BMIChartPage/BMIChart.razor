@@ -144,22 +144,30 @@
         {
             HeightSeries = new List<ChartSeries>
             {
-                new ChartSeries { Name = "Male Height Standard", Data = MeasurementStandards.MaleHeightStandard.Values.Select(h => (double)h).ToArray() }
+                new ChartSeries { Name = "Male Height Standard", Data = MeasurementStandards.MaleHeightStandard.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Male Height OverHeight", Data = MeasurementStandards.MaleOverHeight.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Male Height UnderHeight", Data = MeasurementStandards.MaleUnderHeight.Values.Select(h => (double)h).ToArray() }
             };
             WeightSeries = new List<ChartSeries>
             {
-                new ChartSeries { Name = "Male Weight Standard", Data = MeasurementStandards.MaleWeightStandard.Values.Select(w => (double)w).ToArray() }
+                new ChartSeries { Name = "Male Weight Standard", Data = MeasurementStandards.MaleWeightStandard.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Male Weight OverWeight", Data = MeasurementStandards.MaleOverWeight.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Male Weight UnderWeight", Data = MeasurementStandards.MaleUnderWeight.Values.Select(w => (double)w).ToArray() }
             };
         }
         else if (guestMeasurement.Gender == Gender.Female)
         {
             HeightSeries = new List<ChartSeries>
             {
-                new ChartSeries { Name = "Female Height Standard", Data = MeasurementStandards.FemaleHeightStandard.Values.Select(h => (double)h).ToArray() }
+                new ChartSeries { Name = "Female Height Standard", Data = MeasurementStandards.FemaleHeightStandard.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Female Height OverHeight", Data = MeasurementStandards.FemaleOverHeight.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Female Height UnderHeight", Data = MeasurementStandards.FemaleUnderHeight.Values.Select(h => (double)h).ToArray() }
             };
             WeightSeries = new List<ChartSeries>
             {
-                new ChartSeries { Name = "Female Weight Standard", Data = MeasurementStandards.FemaleWeightStandard.Values.Select(w => (double)w).ToArray() }
+                new ChartSeries { Name = "Female Weight Standard", Data = MeasurementStandards.FemaleWeightStandard.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Female Weight OverWeight", Data = MeasurementStandards.FemaleOverWeight.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Female Weight UnderWeight", Data = MeasurementStandards.FemaleUnderWeight.Values.Select(w => (double)w).ToArray() }
             };
         }
 

@@ -8,12 +8,15 @@ namespace CCP.Service.DTOs
 {
     public class HealthMetricDTO
     {
-        public DateTime MetricDate { get; set; }
+        public Guid? Id { get; set; }
 
-        public float? Temperature { get; set; }
-        public int? HeartRate { get; set; }
-        public string? BloodPressure { get; set; }
-        public string? AllergySymptoms { get; set; }
-        public string? MedicationUse { get; set; }
+        public DateTime MetricDate { get; set; } // Ngày ghi nhận chỉ số
+
+        public float? Temperature { get; set; } // Nhiệt độ cơ thể (°C)
+        public int? HeartRate { get; set; } // Nhịp tim (bpm)
+        public string? BloodPressure { get; set; } // Huyết áp (VD: \"120/80\")
+
+        public string? AllergySymptoms { get; set; } // Triệu chứng dị ứng
+        public string? MedicationUse { get; set; } // Thuốc đã dùng (nếu có)
     }
 }

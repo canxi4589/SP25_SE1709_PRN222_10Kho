@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CCP.Service.DTOs
 {
-    public class PhysicalActivityDto
+    public class PhysicalActivityDTO
     {
         public Guid? Id { get; set; }
         public DateTime RecordDate { get; set; }

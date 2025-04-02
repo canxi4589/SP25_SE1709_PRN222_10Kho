@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CCP.Service.DTOs
 {
-    public class HealthMetricDto
+    public class HealthMetricDTO
     {
         public Guid? Id { get; set; }
 
