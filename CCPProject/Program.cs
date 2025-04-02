@@ -4,6 +4,7 @@ using CCP.Service.EmailService;
 using CCPProject.Components;
 using CCPProject.Extension;
 using HCP.Repository.DatabaseExtension;
+using MudBlazor.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +23,7 @@ builder.Services.AddScoped<IMeasurementService, MeasurementService>();
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 
