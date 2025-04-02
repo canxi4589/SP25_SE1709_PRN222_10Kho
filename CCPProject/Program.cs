@@ -1,3 +1,5 @@
+using CCP.Repositori.Repository;
+using CCP.Service;
 using CCP.Service.EmailService;
 using CCPProject.Components;
 using CCPProject.Extension;
@@ -8,11 +10,18 @@ var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
 // Add services to the container.
+builder.Services.AddRazorPages();
+
+builder.Services.AddHttpClient();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
+builder.Services.AddScoped<IMeasurementService, MeasurementService>();
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -25,9 +34,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseStatusCodePagesWithRedirects("/error1?code={0}");
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.MapRazorPages();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

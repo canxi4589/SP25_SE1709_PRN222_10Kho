@@ -1,0 +1,80 @@
+﻿@inject NavigationManager NavigationManager
+
+<div class="col-md-5 col-lg-4 col-xl-3 theiaStickySidebar">
+    <div class="profile-sidebar">
+        <div class="widget-profile pro-widget-content">
+            <div class="profile-info-widget">
+                <a href="#" class="booking-doc-img">
+                    <img src="@(UserAvatar ?? "assets/img/patients/patient.jpg")" alt="User Image">
+                </a>
+                <div class="profile-det-info">
+                    <h3>@(UserFullName ?? "Richard Wilson")</h3>
+                    <div class="patient-details">
+                        <h5><i class="fas fa-birthday-cake"></i> @(BirthDate ?? "24 Jul 1983"), @(Age ?? 38) years</h5>
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> @(Location ?? "Newyork, USA")</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="dashboard-widget">
+            <nav class="dashboard-menu">
+                <ul>
+                    <li class="@(ActiveTab == "Dashboard" ? "active" : "")">
+                        <a @onclick='() => OnTabSelected.InvokeAsync("Dashboard")'>
+                            <i class="fas fa-columns"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="@(ActiveTab == "Measurement History" ? "active" : "")">
+                        <a @onclick='() => OnTabSelected.InvokeAsync("Measurement History")'>
+                            <i class="fas fa-bookmark"></i>
+                            <span>Measurement History</span>
+                        </a>
+                    </li>
+                    <li class="@(ActiveTab == "Messages" ? "active" : "")">
+                        <a @onclick='() => OnTabSelected.InvokeAsync("Messages")'>
+                            <i class="fas fa-comments"></i>
+                            <span>Messages</span>
+                            @if (UnreadMessages > 0)
+                            {
+                                <small class="unread-msg">@UnreadMessages</small>
+                            }
+                        </a>
+                    </li>
+                    <li class="@(ActiveTab == "Profile" ? "active" : "")">
+                        <a @onclick='() => OnTabSelected.InvokeAsync("Profile")'>
+                            <i class="fas fa-user-cog"></i>
+                            <span>Profile Settings</span>
+                        </a>
+                    </li>
+                    <li class="@(ActiveTab == "Password" ? "active" : "")">
+                        <a @onclick='() => OnTabSelected.InvokeAsync("Password")'>
+                            <i class="fas fa-lock"></i>
+                            <span>Change Password</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a @onclick="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? UserAvatar { get; set; }
+    [Parameter] public string? UserFullName { get; set; }
+    [Parameter] public string? BirthDate { get; set; }
+    [Parameter] public int? Age { get; set; }
+    [Parameter] public string? Location { get; set; }
+    [Parameter] public string ActiveTab { get; set; } = "Dashboard";
+    [Parameter] public int UnreadMessages { get; set; }
+    [Parameter] public EventCallback<string> OnTabSelected { get; set; }
+    [Parameter] public EventCallback OnLogout { get; set; }
+
+    private Task Logout() => OnLogout.InvokeAsync();
+}

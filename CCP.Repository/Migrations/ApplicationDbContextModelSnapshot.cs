@@ -122,8 +122,24 @@ namespace CCP.Repositori.Migrations
                     b.Property<Guid>("ExpertId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("MeasurementId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("NutritionalIntake")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ParentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PhysicalActivityId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("SleepPatternId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
@@ -133,8 +149,7 @@ namespace CCP.Repositori.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
+                    b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -381,8 +396,8 @@ namespace CCP.Repositori.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("BMIResult")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<double?>("BMIResult")
+                        .HasColumnType("float");
 
                     b.Property<string>("BMIResultRaing")
                         .HasColumnType("nvarchar(max)");
@@ -410,6 +425,9 @@ namespace CCP.Repositori.Migrations
 
                     b.Property<DateTime>("RecordDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<float>("Weight")
                         .HasColumnType("real");
@@ -448,6 +466,9 @@ namespace CCP.Repositori.Migrations
                     b.Property<float?>("ServingSize")
                         .HasColumnType("real");
 
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ChildId");
@@ -480,6 +501,9 @@ namespace CCP.Repositori.Migrations
 
                     b.Property<DateTime>("RecordDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -563,6 +587,9 @@ namespace CCP.Repositori.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("SleepQualityRating")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<TimeSpan>("WakeTime")

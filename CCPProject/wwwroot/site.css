@@ -1,0 +1,39 @@
+﻿.animate-vibrate {
+    animation: vibrate 0.5s linear infinite alternate, pause 1.5s linear infinite;
+}
+
+@keyframes vibrate {
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-2px);
+    }
+
+    50% {
+        transform: translateX(2px);
+    }
+
+    75% {
+        transform: translateX(-2px);
+    }
+
+    100% {
+        transform: translateX(2px);
+    }
+}
+
+@keyframes pause {
+    0% {
+        opacity: 1;
+    }
+
+    33% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

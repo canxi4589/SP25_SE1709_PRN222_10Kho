@@ -1,0 +1,450 @@
+﻿@page "/parent-dashboard"
+@using CCP.Repositori.Entities
+@using CCP.Service
+@using CCPProject.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IMeasurementService MeasurementService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@layout Layout1
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Component -->
+            <Sideboard UserAvatar="@userAvatar"
+            UserFullName="@userFullName"
+            BirthDate="@birthDate"
+            Age="@age"
+            Location="@location"
+            ActiveTab="@activeTab"
+            UnreadMessages="@unreadMessages"
+            OnTabSelected="SetActiveTab"
+            OnLogout="Logout" />
+
+            <!-- Main Content -->
+            <div class="col-md-7 col-lg-8 col-xl-9">
+                @if (activeTab == "Dashboard")
+                {
+                    <div class="card">
+                        <div class="card-body pt-0">
+                            <!-- Tab Menu -->
+                            <nav class="user-tabs mb-4">
+                                <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
+                                    <li class="nav-item">
+                                        <a class="nav-link @(activeContentTab == "Appointments" ? "active" : "")" @onclick='() => SetContentTab("Appointments")'>Appointments</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link @(activeContentTab == "Prescriptions" ? "active" : "")" @onclick='() => SetContentTab("Prescriptions")'>Prescriptions</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link @(activeContentTab == "MedicalRecords" ? "active" : "")" @onclick='() => SetContentTab("MedicalRecords")'><span class="med-records">Medical Records</span></a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link @(activeContentTab == "Billing" ? "active" : "")" @onclick='() => SetContentTab("Billing")'>Billing</a>
+                                    </li>
+                                </ul>
+                            </nav>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content pt-0">
+                                <!-- Appointment Tab -->
+                                @if (activeContentTab == "Appointments")
+                                {
+                                    <div class="card card-table mb-0">
+                                        <div class="card-body">
+                                            <h3>Appointments</h3>
+                                            <div class="table-responsive">
+                                                <table class="table table-hover table-center mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Doctor</th>
+                                                            <th>Appt Date</th>
+                                                            <th>Booking Date</th>
+                                                            <th>Amount</th>
+                                                            <th>Follow Up</th>
+                                                            <th>Status</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var appointment in Appointments)
+                                                        {
+                                                            <tr>
+                                                                <td>
+                                                                    <h2 class="table-avatar">
+                                                                        <a href="/doctor-profile" class="avatar avatar-sm mr-2">
+                                                                            <img class="avatar-img rounded-circle" src="@appointment.DoctorAvatar" alt="User Image">
+                                                                        </a>
+                                                                        <a href="/doctor-profile">@appointment.DoctorName <span>@appointment.Specialty</span></a>
+                                                                    </h2>
+                                                                </td>
+                                                                <td>@appointment.AppointmentDate <span class="d-block text-info">@appointment.AppointmentTime</span></td>
+                                                                <td>@appointment.BookingDate</td>
+                                                                <td>@appointment.Amount</td>
+                                                                <td>@appointment.FollowUpDate</td>
+                                                                <td><span class="badge badge-pill @appointment.StatusClass">@appointment.Status</span></td>
+                                                                <td class="text-right">
+                                                                    <div class="table-action">
+                                                                        <a href="javascript:void(0);" class="btn btn-sm bg-primary-light" @onclick="() => Print(appointment)">
+                                                                            <i class="fas fa-print"></i> Print
+                                                                        </a>
+                                                                        <a href="javascript:void(0);" class="btn btn-sm bg-info-light" @onclick="() => View(appointment)">
+                                                                            <i class="far fa-eye"></i> View
+                                                                        </a>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                <!-- Prescription Tab -->
+                                @if (activeContentTab == "Prescriptions")
+                                {
+                                    <div class="card card-table mb-0">
+                                        <div class="card-body">
+                                            <h3>Prescriptions</h3>
+                                            <p>Prescription content here.</p>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Medical Records Tab -->
+                                @if (activeContentTab == "MedicalRecords")
+                                {
+                                    <div class="card card-table mb-0">
+                                        <div class="card-body">
+                                            <h3>Medical Records</h3>
+                                            <p>Medical records content here.</p>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Billing Tab -->
+                                @if (activeContentTab == "Billing")
+                                {
+                                    <div class="card card-table mb-0">
+                                        <div class="card-body">
+                                            <h3>Billing</h3>
+                                            <p>Billing content here.</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (activeTab == "Measurement History")
+                {
+                    @if (child == null)
+                    {
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Select a Child</h5>
+                                <div class="list-group">
+                                    @foreach (var c in children)
+                                    {
+                                        <a href="javascript:void(0);" class="list-group-item list-group-item-action" @onclick="() => SelectChild(c.Id)">
+                                            <h5 class="mb-1">@c.Name</h5>
+                                            <small>Birthdate: @c.DateOfBirth.ToShortDateString()</small>
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        @* Show Measurement History *@
+                        @if (activeTab == "Measurement History")
+                        {
+                            <div class="card">
+                                <div class="card-body pt-0">
+                                    <!-- Tab Menu -->
+                                    <nav class="user-tabs mb-4">
+                                        <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
+                                            @foreach (var category in Categories)
+                                            {
+                                                <li class="nav-item">
+                                                    <a class="nav-link @(selectedCategory == category.Key ? "active" : "")" @onclick="() => SelectCategory(category.Key)">
+                                                        @category.Value
+                                                    </a>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </nav>
+
+                                    <!-- Tab Content -->
+                                    <div class="tab-content pt-0">
+                                        <div class="tab-pane fade show active">
+                                            <div class="card card-table mb-0">
+                                                <div class="card-body">
+                                                    @if (measurements == null)
+                                                    {
+                                                        <div class="d-flex justify-content-center align-items-center my-5">
+                                                            <div class="spinner-border text-primary" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <!-- Child Info -->
+                                                        <div class="d-flex justify-content-center mb-4">
+                                                            <div class="card p-4 shadow-lg text-center" style="border-radius: 50%; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                                                <div>
+                                                                    <h5 class="card-title fw-bold">@child.Name</h5>
+                                                                    <p class="card-text">Birthdate: @child.DateOfBirth.ToShortDateString()</p>
+                                                                    <p class="card-text">Gender: @child.Gender</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        @if (filteredMeasurements.Any())
+                                                        {
+                                                            <div class="table-responsive">
+                                                                <table class="table table-hover table-center mb-0">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Record Date</th>
+                                                                            <th>@Categories[selectedCategory]</th>
+                                                                            <th>Result</th>
+                                                                            <th>Rating</th>
+                                                                            <th>Consultation</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach (var item in filteredMeasurements)
+                                                                        {
+                                                                            <tr>
+                                                                                <td>@item.RecordDate.ToShortDateString()</td>
+                                                                                <td>@GetMeasurementValue(item, selectedCategory)</td>
+                                                                                <td class="@(IsNormal(GetResult(item, selectedCategory), selectedCategory) ? "text-primary" : "text-danger")">
+                                                                                    @GetResult(item, selectedCategory)
+                                                                                </td>
+                                                                                <td>@GetRating(item, selectedCategory)</td>
+                                                                                <td>
+                                                                                    @if (ShouldShowConsultationButton(item, selectedCategory))
+                                                                                    {
+                                                                                        <a href="javascript:void(0);" class="btn btn-sm bg-danger-light" @onclick="() => NavigateToConsultation()">
+                                                                                            <i class="fas fa-exclamation-circle"></i> Consult
+                                                                                        </a>
+                                                                                    }
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <p class="text-muted text-center">No records found for @Categories[selectedCategory].</p>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+                else if (activeTab == "Messages")
+                {
+                    <div class="card">
+                        <div class="card-body">
+                            <h3>Messages</h3>
+                            <p>Your messages here. Unread: @unreadMessages</p>
+                        </div>
+                    </div>
+                }
+                else if (activeTab == "Profile")
+                {
+                    <div class="card">
+                        <div class="card-body">
+                            <h3>Profile Settings</h3>
+                            <p>Profile settings content here.</p>
+                        </div>
+                    </div>
+                }
+                else if (activeTab == "Password")
+                {
+                    <div class="card">
+                        <div class="card-body">
+                            <h3>Change Password</h3>
+                            <p>Password change form here.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? userAvatar;
+    private string? userFullName;
+    private string? birthDate;
+    private int? age;
+    private string? location;
+    private string activeTab = "Dashboard"; // Sidebar selection
+    private string activeContentTab = "Appointments"; // Tab content selection
+    private int unreadMessages = 23;
+    private List<Appointment> Appointments { get; set; } = new();
+    [Parameter] public Guid ChildId { get; set; }
+    private List<Child> children = new();
+    private Child? child { get; set; }
+    private List<Measurement> measurements = new();
+    private List<Measurement> filteredMeasurements = new();
+    private string selectedCategory = "Height";
+
+    protected override async Task OnInitializedAsync()
+    {
+        children = await MeasurementService.GetChildrenByParent(Guid.Parse("f1854b09-f097-442e-9917-67e95ffb1e34"));
+        SelectCategory(selectedCategory);
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            userFullName = user.FindFirst("name")?.Value ?? "Richard Wilson";
+            userAvatar = user.FindFirst("avatar")?.Value ?? "assets/img/patients/patient.jpg";
+            birthDate = user.FindFirst("birthdate")?.Value ?? "24 Jul 1983";
+            location = user.FindFirst("location")?.Value ?? "Newyork, USA";
+            age = CalculateAge(birthDate);
+        }
+        LoadSampleData();
+    }
+
+    private async Task SelectChild(Guid childId)
+    {
+        (child, measurements) = await MeasurementService.GetChildWithMeasurementsAsync(childId);
+        selectedCategory = Categories.Keys.FirstOrDefault();
+        SelectCategory(selectedCategory);
+        StateHasChanged();
+    }
+
+    private void LoadSampleData()
+    {
+        Appointments = new List<Appointment>
+        {
+            new Appointment { DoctorName = "Dr. Ruby Perrin", Specialty = "Dental", DoctorAvatar = "assets/img/doctors/doctor-thumb-01.jpg", AppointmentDate = "14 Nov 2019", AppointmentTime = "10.00 AM", BookingDate = "12 Nov 2019", Amount = "$160", FollowUpDate = "16 Nov 2019", Status = "Confirm", StatusClass = "bg-success-light" },
+            new Appointment { DoctorName = "Dr. Darren Elder", Specialty = "Dental", DoctorAvatar = "assets/img/doctors/doctor-thumb-02.jpg", AppointmentDate = "12 Nov 2019", AppointmentTime = "8.00 PM", BookingDate = "12 Nov 2019", Amount = "$250", FollowUpDate = "14 Nov 2019", Status = "Confirm", StatusClass = "bg-success-light" },
+            // Add more from your HTML
+        };
+    }
+
+    private int CalculateAge(string? birthDateStr)
+    {
+        if (DateTime.TryParse(birthDateStr, out var birth))
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birth.Year;
+            if (birth > today.AddYears(-age)) age--;
+            return age;
+        }
+        return 38;
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+        if (tab == "Dashboard") activeContentTab = "Appointments"; // Reset to default tab when switching to Dashboard
+        StateHasChanged();
+    }
+
+    private void SetContentTab(string tab) => activeContentTab = tab;
+    private async Task Logout() => NavigationManager.NavigateTo("/signout", forceLoad: true);
+    private async Task Print(Appointment item) => await JSRuntime.InvokeVoidAsync("window.print");
+    private void View(Appointment item) => Console.WriteLine($"Viewing: {item.DoctorName}");
+
+    public class Appointment
+    {
+        public string DoctorName { get; set; } = "";
+        public string Specialty { get; set; } = "";
+        public string DoctorAvatar { get; set; } = "";
+        public string AppointmentDate { get; set; } = "";
+        public string AppointmentTime { get; set; } = "";
+        public string BookingDate { get; set; } = "";
+        public string Amount { get; set; } = "";
+        public string FollowUpDate { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string StatusClass { get; set; } = "";
+    }
+
+
+    private readonly Dictionary<string, string> Categories = new()
+    {
+        { "Height", "Height" },
+        { "Weight", "Weight" },
+        { "BMI", "BMI" },
+        { "HeadCircumference", "Head Circumference" }
+    };
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+        filteredMeasurements = measurements
+            .Where(m => GetMeasurementValue(m, category) != null)
+            .OrderByDescending(m => m.RecordDate)
+            .ToList();
+        StateHasChanged();
+    }
+
+    private object GetMeasurementValue(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.Height.ToString("F2"),
+        "Weight" => measurement.Weight.ToString("F2"),
+        "BMI" => measurement.BMIResult,
+        "HeadCircumference" => measurement.HeadCircumference?.ToString("F2"),
+        _ => null
+    };
+
+    private string? GetResult(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.HeightResult,
+        "Weight" => measurement.WeightResult,
+        "BMI" => measurement.BMIResult.ToString() + " Kg/m2",
+        "HeadCircumference" => measurement.HeadCircumferenceResult,
+        _ => null
+    };
+
+    private string? GetRating(Measurement measurement, string category) => category switch
+    {
+        "Height" => measurement.HeightResultRating,
+        "Weight" => measurement.WeightResultRating,
+        "BMI" => measurement.BMIResultRaing,
+        "HeadCircumference" => measurement.HeadCircumferenceResultRating,
+        _ => null
+    };
+
+    private bool IsNormal(string? result, string category)
+    {
+        if (category == "BMI")
+        {
+            return result?.Equals("Normal", StringComparison.OrdinalIgnoreCase) ?? false;
+        }
+        return !string.IsNullOrWhiteSpace(result) && result.Equals("Normal", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool ShouldShowConsultationButton(Measurement measurement, string category)
+    {
+        var result = GetResult(measurement, category);
+        var rating = GetRating(measurement, category);
+
+        if (category == "BMI")
+        {
+            return !IsNormal(rating, category);
+        }
+        return !IsNormal(result, category);
+    }
+
+    private void NavigateToConsultation() => NavigationManager.NavigateTo("/consultation-booking");
+}
