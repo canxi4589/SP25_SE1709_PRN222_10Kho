@@ -11,7 +11,6 @@ namespace CCP.Service.DTOs
         [Required(ErrorMessage = "Weight is required.")]
         public float Weight { get; set; }
 
-        // Trường này là tùy chọn
         public float? HeadCircumference { get; set; }
     }
 }
