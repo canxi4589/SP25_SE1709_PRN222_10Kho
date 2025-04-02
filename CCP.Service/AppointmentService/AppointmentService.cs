@@ -26,7 +26,7 @@ namespace CCP.Service.AppointmentService
             await _unitOfWork.Repository<Appointment>().AddAsync(new Appointment
             {
                 Id = Guid.NewGuid(),
-                UserId = appointmentDTO.UserId,
+                ParentId = appointmentDTO.UserId,
                 ChildId = appointmentDTO.ChildId,
                 ExpertId = appointmentDTO.ExpertId,
                 StartTime = appointmentDTO.StartTime,

@@ -1,0 +1,123 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="card">
+    <div class="card-body pt-0">
+        <!-- Tab Menu -->
+        <nav class="user-tabs mb-4">
+            <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
+                <li class="nav-item">
+                    <a class="nav-link @(ActiveTab == "Appointments" ? "active" : "")" @onclick='() => SetActiveTab("Appointments")'>Appointments</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ActiveTab == "Prescriptions" ? "active" : "")" @onclick='() => SetActiveTab("Prescriptions")'>Prescriptions</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ActiveTab == "MedicalRecords" ? "active" : "")" @onclick='() => SetActiveTab("MedicalRecords")'><span class="med-records">Medical Records</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ActiveTab == "Billing" ? "active" : "")" @onclick='() => SetActiveTab("Billing")'>Billing</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content pt-0">
+            <!-- Appointment Tab -->
+            <div class="tab-pane @(ActiveTab == "Appointments" ? "fade show active" : "fade")">
+                <div class="card card-table mb-0">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Doctor</th>
+                                        <th>Appt Date</th>
+                                        <th>Booking Date</th>
+                                        <th>Amount</th>
+                                        <th>Follow Up</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var appointment in Appointments)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <h2 class="table-avatar">
+                                                    <a href="/doctor-profile" class="avatar avatar-sm mr-2">
+                                                        <img class="avatar-img rounded-circle" src="@appointment.DoctorAvatar" alt="User Image">
+                                                    </a>
+                                                    <a href="/doctor-profile">@appointment.DoctorName <span>@appointment.Specialty</span></a>
+                                                </h2>
+                                            </td>
+                                            <td>@appointment.AppointmentDate <span class="d-block text-info">@appointment.AppointmentTime</span></td>
+                                            <td>@appointment.BookingDate</td>
+                                            <td>@appointment.Amount</td>
+                                            <td>@appointment.FollowUpDate</td>
+                                            <td><span class="badge badge-pill @appointment.StatusClass">@appointment.Status</span></td>
+                                            <td class="text-right">
+                                                <div class="table-action">
+                                                    <a href="javascript:void(0);" class="btn btn-sm bg-primary-light" @onclick="() => Print(appointment)">
+                                                        <i class="fas fa-print"></i> Print
+                                                    </a>
+                                                    <a href="javascript:void(0);" class="btn btn-sm bg-info-light" @onclick="() => View(appointment)">
+                                                        <i class="far fa-eye"></i> View
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prescription Tab -->
+            <div class="tab-pane @(ActiveTab == "Prescriptions" ? "fade show active" : "fade")">
+                <!-- Add Prescriptions content -->
+            </div>
+
+            <!-- Medical Records Tab -->
+            <div class="tab-pane @(ActiveTab == "MedicalRecords" ? "fade show active" : "fade")">
+                <!-- Add MedicalRecords content -->
+            </div>
+
+            <!-- Billing Tab -->
+            <div class="tab-pane @(ActiveTab == "Billing" ? "fade show active" : "fade")">
+                <!-- Add Billings content -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<Appointment> Appointments { get; set; } = new();
+    [Parameter] public string ActiveTab { get; set; } = "Appointments";
+    [Parameter] public EventCallback<string> OnTabChanged { get; set; }
+
+    private void SetActiveTab(string tab)
+    {
+        ActiveTab = tab;
+        OnTabChanged.InvokeAsync(tab);
+    }
+
+    private async Task Print(Appointment item) => await JSRuntime.InvokeVoidAsync("window.print");
+    private void View(Appointment item) => Console.WriteLine($"Viewing: {item.DoctorName}");
+
+    public class Appointment
+    {
+        public string DoctorName { get; set; } = "";
+        public string Specialty { get; set; } = "";
+        public string DoctorAvatar { get; set; } = "";
+        public string AppointmentDate { get; set; } = "";
+        public string AppointmentTime { get; set; } = "";
+        public string BookingDate { get; set; } = "";
+        public string Amount { get; set; } = "";
+        public string FollowUpDate { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string StatusClass { get; set; } = "";
+    }
+}

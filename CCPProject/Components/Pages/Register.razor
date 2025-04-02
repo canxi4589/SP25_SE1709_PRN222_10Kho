@@ -1,0 +1,149 @@
+﻿@page "/register"
+@using System.ComponentModel.DataAnnotations
+@using CCP.Repositori.Entities
+@using CCPProject.Components.Layout
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<AppUser> UserManager
+@inject NavigationManager NavigationManager
+@layout Layout1
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="account-content">
+                    <div class="row align-items-center justify-content-center">
+                        <div class="col-md-7 col-lg-6 login-left">
+                            <img src="assets/img/login-banner.png" class="img-fluid" alt="Register Banner">
+                        </div>
+                        <div class="col-md-12 col-lg-6 login-right">
+                            <div class="login-header">
+                                <h3>Patient Register <a href="/doctor-register">Are you a Doctor?</a></h3>
+                            </div>
+
+                            <form @onsubmit="RegisterAsync">
+                                <div class="form-group form-focus">
+                                    <input type="text" class="form-control floating" id="fullName" @bind="_model.FullName" required />
+                                    <label class="focus-label">Name</label>
+                                    @if (string.IsNullOrEmpty(_model.FullName))
+                                    {
+                                        <div class="text-danger">Name is required</div>
+                                    }
+                                </div>
+
+                                <div class="form-group form-focus">
+                                    <input type="email" class="form-control floating" id="email" @bind="_model.Email" required />
+                                    <label class="focus-label">Email</label>
+                                    @if (_model.Email != null && !_emailValidation.IsValid(_model.Email))
+                                    {
+                                        <div class="text-danger">Please enter a valid email address</div>
+                                    }
+                                </div>
+
+                                <div class="form-group form-focus">
+                                    <input type="password" class="form-control floating" id="password" @bind="_model.Password" required />
+                                    <label class="focus-label">Create Password</label>
+                                    @if (_model.Password != null && _model.Password.Length < 6)
+                                    {
+                                        <div class="text-danger">Password must be at least 6 characters</div>
+                                    }
+                                </div>
+
+                                <div class="form-group form-focus">
+                                    <input type="password" class="form-control floating" id="confirmPassword" @bind="_model.ConfirmPassword" required />
+                                    <label class="focus-label">Confirm Password</label>
+                                    @if (_model.ConfirmPassword != null && _model.ConfirmPassword != _model.Password)
+                                    {
+                                        <div class="text-danger">Passwords do not match</div>
+                                    }
+                                </div>
+
+                                <div class="form-group form-focus">
+                                    <input type="date" class="form-control floating" id="dateOfBirth" @bind="_model.DateOfBirth" />
+                                    <label class="focus-label">Date of Birth (Optional)</label>
+                                </div>
+
+                                <div class="text-right">
+                                    <a class="forgot-link" href="/login">Already have an account?</a>
+                                </div>
+
+                                <button class="btn btn-primary btn-block btn-lg login-btn"
+                                        type="submit"
+                                        disabled="@(!IsFormValid())">
+                                    Signup
+                                </button>
+
+                                @if (!string.IsNullOrEmpty(_errorMessage))
+                                {
+                                    <div class="alert alert-danger mt-3" role="alert">
+                                        @_errorMessage
+                                    </div>
+                                }
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel _model = new RegisterModel();
+    private string _errorMessage = string.Empty;
+    private EmailAddressAttribute _emailValidation = new EmailAddressAttribute();
+
+    public class RegisterModel
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+        public DateTime? DateOfBirth { get; set; }
+    }
+
+    private bool IsFormValid()
+    {
+        return !string.IsNullOrEmpty(_model.FullName) &&
+               _emailValidation.IsValid(_model.Email) &&
+               _model.Password?.Length >= 6 &&
+               _model.Password == _model.ConfirmPassword;
+    }
+
+    private async Task RegisterAsync()
+    {
+        _errorMessage = string.Empty;
+
+        try
+        {
+            var user = new AppUser
+                {
+                    UserName = _model.Email,
+                    Email = _model.Email,
+                    FullName = _model.FullName,
+                    DateOfBirth = _model.DateOfBirth,
+                    IsActive = true,
+                    RegistrationDate = DateTime.Now,
+                    EmailConfirmed = true
+                };
+
+            var result = await UserManager.CreateAsync(user, _model.Password);
+
+            if (result.Succeeded)
+            {
+                await UserManager.AddToRoleAsync(user, "Parent");
+            }
+            if (result.Succeeded)
+            {
+                NavigationManager.NavigateTo($"/SetAuthCookie?email={Uri.EscapeDataString(_model.Email)}", forceLoad: true);
+            }
+            else
+            {
+                _errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred while registering: {ex.Message}";
+        }
+    }
+}

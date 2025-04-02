@@ -1,0 +1,10 @@
+﻿@page "/LoginProcess"
+@model CCPProject.Pages.LoginProcessModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @Model.ErrorMessage
+    </div>
+}

@@ -28,10 +28,12 @@ namespace CCP.Repositori.Entities
         public string? HeightResultRating { get; set; }
         public string? WeightResult { get; set; }
         public string? WeightResultRating { get; set; }
-        public string? BMIResult { get; set; }
+        public double? BMIResult { get; set; }
         public string? BMIResultRaing { get; set; }
         public string? HeadCircumferenceResult {  get; set; }
         public string? HeadCircumferenceResultRating {  get; set; }
+
+        public string? Status { get; set; }       //status check if this has been booked for appointment
 
         // Navigation property
         public Child Child { get; set; }
