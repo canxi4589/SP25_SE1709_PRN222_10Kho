@@ -98,6 +98,36 @@ namespace CCP.Repositori.ResultData
             {11, 50.0f}, {12, 51.0f}, {13, 52.0f}, {14, 53.0f}, {15, 54.0f},
             {16, 55.0f}, {17, 56.0f}, {18, 57.0f}, {19, 58.0f}, {20, 59.0f}
         };
+        public static readonly Dictionary<int, float> MaleHeightUnderWeight = new()
+{
+    {1, 70.0f}, {2, 82.0f}, {3, 90.0f}, {4, 98.0f}, {5, 105.0f},
+    {6, 111.0f}, {7, 116.0f}, {8, 121.0f}, {9, 126.0f}, {10, 131.0f},
+    {11, 136.0f}, {12, 141.0f}, {13, 147.0f}, {14, 153.0f}, {15, 158.0f},
+    {16, 162.0f}, {17, 165.0f}, {18, 167.0f}, {19, 168.0f}, {20, 169.0f}
+};
+
+        public static readonly Dictionary<int, float> MaleHeightOverWeight = new()
+{
+    {1, 72.0f}, {2, 85.0f}, {3, 93.0f}, {4, 101.0f}, {5, 108.0f},
+    {6, 114.0f}, {7, 120.0f}, {8, 125.0f}, {9, 130.0f}, {10, 135.0f},
+    {11, 140.0f}, {12, 146.0f}, {13, 152.0f}, {14, 158.0f}, {15, 162.0f},
+    {16, 166.0f}, {17, 169.0f}, {18, 171.0f}, {19, 172.0f}, {20, 173.0f}
+};
+        public static readonly Dictionary<int, float> FemaleWeightUnderWeight = new()
+{
+    {1, 8.0f}, {2, 10.5f}, {3, 12.0f}, {4, 13.5f}, {5, 15.0f},
+    {6, 16.8f}, {7, 18.0f}, {8, 20.0f}, {9, 22.0f}, {10, 24.0f},
+    {11, 26.0f}, {12, 28.0f}, {13, 30.0f}, {14, 33.0f}, {15, 36.0f},
+    {16, 38.0f}, {17, 40.0f}, {18, 41.5f}, {19, 42.0f}, {20, 43.0f}
+};
+
+        public static readonly Dictionary<int, float> FemaleWeightOverWeight = new()
+{
+    {1, 10.5f}, {2, 13.0f}, {3, 15.5f}, {4, 18.0f}, {5, 20.5f},
+    {6, 23.0f}, {7, 26.0f}, {8, 29.0f}, {9, 32.0f}, {10, 35.0f},
+    {11, 39.0f}, {12, 43.0f}, {13, 47.0f}, {14, 51.0f}, {15, 55.0f},
+    {16, 58.0f}, {17, 60.0f}, {18, 62.0f}, {19, 63.0f}, {20, 64.0f}
+};
         public static BmiRating GetBmiRating(float bmi)
         {
             return bmi switch
