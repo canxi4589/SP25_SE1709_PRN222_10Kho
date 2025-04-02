@@ -81,10 +81,7 @@
             return;
         }
 
-        // Construct the URL with query parameters
         var uri = $"/LoginProcess?email={Uri.EscapeDataString(Email)}&password={Uri.EscapeDataString(Password)}&rememberMe={RememberMe}";
-        NavigationManager.NavigateTo(uri, forceLoad: true); // forceLoad ensures server-side navigation
+        NavigationManager.NavigateTo(uri, forceLoad: true);
     }
-    // Optional: You could handle form submission here and set ErrorMessage if needed,
-    // but since we're passing to .cshtml, we'll let it handle the logic.
 }

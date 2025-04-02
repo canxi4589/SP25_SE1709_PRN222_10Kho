@@ -39,5 +39,10 @@ namespace CCP.Service
             return (result, result?.Measurements?.ToList() ?? new List<Measurement>());
         }
 
+        public async Task<List<Child>> GetChildrenByParent(Guid parentId)
+        {
+            return await _unitOfWork.Repository<Child>().GetAll().Where(c => c.UserId == parentId.ToString()).ToListAsync();
+        }
+
     }
 }
