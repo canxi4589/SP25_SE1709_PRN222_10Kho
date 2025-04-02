@@ -1,34 +1,202 @@
 ﻿@page "/bmichart"
 @rendermode InteractiveServer
 @using CCP.Repositori.Entities
+@using CCP.Repositori.Enums
 @using CCP.Repositori.ResultData
+@using CCP.Service.DTOs
 @using MudBlazor
+@using CCPProject.Components.Layout
+@layout Layout1
+@inject IDialogService DialogService
+@inject NavigationManager navigationManager
 
-<div>
-    <MudChart ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350" ChartOptions="options"></MudChart>
+<div class="d-flex">
+    <div class="form-container p-3">
+        <h3>Guest Measurement Form</h3>
+
+        <EditForm Model="@guestMeasurement" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label for="gender" class="form-label">Gender</label>
+                <InputSelect id="gender" class="form-select" @bind-Value="guestMeasurement.Gender">
+                    <option value="@Gender.Male">Male</option>
+                    <option value="@Gender.Female">Female</option>
+                </InputSelect>
+                <ValidationMessage For="@(() => guestMeasurement.Gender)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="height" class="form-label">Height (cm)</label>
+                <InputNumber id="height" class="form-control" @bind-Value="guestMeasurement.Height" required />
+                <ValidationMessage For="@(() => guestMeasurement.Height)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="weight" class="form-label">Weight (kg)</label>
+                <InputNumber id="weight" class="form-control" @bind-Value="guestMeasurement.Weight" required />
+                <ValidationMessage For="@(() => guestMeasurement.Weight)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="headCircumference" class="form-label">Head Circumference (cm)</label>
+                <InputNumber id="headCircumference" class="form-control" @bind-Value="guestMeasurement.HeadCircumference" required />
+                <ValidationMessage For="@(() => guestMeasurement.HeadCircumference)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                <InputDate id="dateOfBirth" class="form-control" @bind-Value="guestMeasurement.DateOfBirth" required />
+                <ValidationMessage For="@(() => guestMeasurement.DateOfBirth)" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="button" class="btn btn-secondary" @onclick="ResetForm">Reset</button>
+            </div>
+        </EditForm>
+
+        @if (isSubmitted)
+        {
+            <div class="mt-3 alert alert-success">
+                <h4>Submitted Data:</h4>
+                <p>Gender: @guestMeasurement.Gender</p>
+                <p>Height: @guestMeasurement.Height cm</p>
+                <p>Weight: @guestMeasurement.Weight kg</p>
+                <p>Head Circumference: @guestMeasurement.HeadCircumference cm</p>
+                <p>Date of Birth: @guestMeasurement.DateOfBirth.ToShortDateString()</p>
+                <p>Age in Years: @CalculateAgeInYears(guestMeasurement.DateOfBirth)</p>
+                <p>BMI: @bmi:F2</p>
+                <p>BMI Rating: @bmiRating</p>
+            </div>
+        }
+    </div>
+    <div class="chart-container p-3">
+        @if (showChart)
+        {
+            <MudChart ChartType="ChartType.Line"
+                      ChartSeries="@HeightSeries"
+                      XAxisLabels="@XAxisLabels"
+                      Width="100%"
+                      Height="350px"
+                      ChartOptions="options">
+                <CustomGraphics>
+                    @if (guestMeasurement.Height > 0)
+                    {
+                        <circle cx="50%" cy="@(((1-((guestMeasurement.Height - minHeight) / (maxHeight - minHeight))) * 100) + '%') r="5" fill="red" />
+                    }
+                </CustomGraphics>
+            </MudChart>
+            <MudChart ChartType="ChartType.Line"
+                      ChartSeries="@WeightSeries"
+                      XAxisLabels="@XAxisLabels"
+                      Width="100%"
+                      Height="350px"
+                      ChartOptions="options">
+            </MudChart>
+        }
+    </div>
 </div>
 
 @code {
+    private GuestMeasurementInputDto guestMeasurement = new GuestMeasurementInputDto();
+    private bool isSubmitted = false;
+    private bool showChart = false;
     private ChartOptions options = new ChartOptions();
-    public List<ChartSeries> Series = new List<ChartSeries>();
+    public List<ChartSeries> HeightSeries = new List<ChartSeries>();
+    public List<ChartSeries> WeightSeries = new List<ChartSeries>();
     public string[] XAxisLabels;
+    private double bmi;
+    private BmiRating bmiRating;
+    private double minHeight;
+    private double maxHeight;
 
     protected override void OnInitialized()
     {
+        // Configure chart options
         options.InterpolationOption = InterpolationOption.NaturalSpline;
-        options.YAxisFormat = "F2";
+        options.YAxisFormat = "F0"; // Display integers on y-axis
 
-        // Prepare data for the chart
-        var maleHeightData = MeasurementStandards.MaleHeightStandard.Values.Select(h => (double)h).ToArray();
-        var femaleHeightData = MeasurementStandards.FemaleHeightStandard.Values.Select(h => (double)h).ToArray();
-        var ageLabels = MeasurementStandards.MaleHeightStandard.Keys.Select(k => k.ToString()).ToArray();
+        // Prepare initial data for the chart
+        XAxisLabels = MeasurementStandards.MaleHeightStandard.Keys.Select(k => k.ToString()).ToArray();
 
-        Series = new List<ChartSeries>
+        // Calculate min and max heights from standards
+        minHeight = Math.Min(
+            MeasurementStandards.MaleHeightStandard.Values.Min(),
+            MeasurementStandards.FemaleHeightStandard.Values.Min());
+        maxHeight = Math.Max(
+            MeasurementStandards.MaleHeightStandard.Values.Max(),
+            MeasurementStandards.FemaleHeightStandard.Values.Max());
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        isSubmitted = true;
+        showChart = true;
+
+        // Calculate BMI
+        bmi = CalculateBmi(guestMeasurement.Weight, guestMeasurement.Height);
+        bmiRating = MeasurementStandards.GetBmiRating((float)bmi);
+
+        // Update chart data based on gender
+        if (guestMeasurement.Gender == Gender.Male)
         {
-            new ChartSeries { Name = "Male Height", Data = maleHeightData },
-            new ChartSeries { Name = "Female Height", Data = femaleHeightData }
-        };
+            HeightSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Male Height Standard", Data = MeasurementStandards.MaleHeightStandard.Values.Select(h => (double)h).ToArray() }
+            };
+            WeightSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Male Weight Standard", Data = MeasurementStandards.MaleWeightStandard.Values.Select(w => (double)w).ToArray() }
+            };
+        }
+        else if (guestMeasurement.Gender == Gender.Female)
+        {
+            HeightSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Female Height Standard", Data = MeasurementStandards.FemaleHeightStandard.Values.Select(h => (double)h).ToArray() }
+            };
+            WeightSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Female Weight Standard", Data = MeasurementStandards.FemaleWeightStandard.Values.Select(w => (double)w).ToArray() }
+            };
+        }
 
-        XAxisLabels = ageLabels;
+        await DialogService.ShowMessageBox("Form Submitted", "The guest measurement data has been submitted successfully.");
+    }
+
+    private double CalculateBmi(float weight, float heightCm)
+    {
+        // Convert height from cm to meters
+        double heightM = heightCm / 100.0;
+        return weight / (heightM * heightM);
+    }
+
+    private int CalculateAgeInYears(DateTime dateOfBirth)
+    {
+        var today = DateTime.Today;
+        int years = today.Year - dateOfBirth.Year;
+        if (dateOfBirth.Date > today.AddYears(-years)) years--;
+        return years >= 0 ? years : 0;
+    }
+
+    private void ResetForm()
+    {
+        guestMeasurement = new GuestMeasurementInputDto();
+        isSubmitted = false;
+        showChart = false;
+		navigationManager.NavigateTo("/bmichart", forceLoad: true);
     }
 }
+
+<style>
+    .form-container {
+        width: 30%;
+    }
+
+    .chart-container {
+        width: 70%;
+    }
+</style>
+
