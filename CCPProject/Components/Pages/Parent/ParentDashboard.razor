@@ -3,7 +3,10 @@
 @using CCP.Service
 @using CCPProject.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
 @inject IMeasurementService MeasurementService
+@inject UserManager<AppUser> UserManager
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
@@ -17,7 +20,7 @@
             UserFullName="@userFullName"
             BirthDate="@birthDate"
             Age="@age"
-            Location="@location"
+            Email="@email"
             ActiveTab="@activeTab"
             UnreadMessages="@unreadMessages"
             OnTabSelected="SetActiveTab"
@@ -36,7 +39,7 @@
                                         <a class="nav-link @(activeContentTab == "Appointments" ? "active" : "")" @onclick='() => SetContentTab("Appointments")'>Appointments</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link @(activeContentTab == "Prescriptions" ? "active" : "")" @onclick='() => SetContentTab("Prescriptions")'>Prescriptions</a>
+                                        <a class="nav-link @(activeContentTab == "Measurement History" ? "active" : "")" @onclick='() => SetContentTab("Prescriptions")'>Prescriptions</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link @(activeContentTab == "MedicalRecords" ? "active" : "")" @onclick='() => SetContentTab("MedicalRecords")'><span class="med-records">Medical Records</span></a>
@@ -160,11 +163,15 @@
                     }
                     else
                     {
-                        @* Show Measurement History *@
                         @if (activeTab == "Measurement History")
                         {
                             <div class="card">
                                 <div class="card-body pt-0">
+                                    <div class="mb-3">
+                                        <button class="btn btn-secondary" @onclick="GoBackToChildSelection">
+                                            <i class="fas fa-arrow-left"></i> Back to Child Selection
+                                        </button>
+                                    </div>
                                     <!-- Tab Menu -->
                                     <nav class="user-tabs mb-4">
                                         <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
@@ -184,7 +191,7 @@
                                         <div class="tab-pane fade show active">
                                             <div class="card card-table mb-0">
                                                 <div class="card-body">
-                                                    @if (measurements == null)
+                                                    @if (measurements == null && (selectedCategory.Contains("Height") || selectedCategory.Contains("Weight") || selectedCategory.Contains("BMI") || selectedCategory.Contains("HeadCircumference")))
                                                     {
                                                         <div class="d-flex justify-content-center align-items-center my-5">
                                                             <div class="spinner-border text-primary" role="status">
@@ -205,46 +212,228 @@
                                                             </div>
                                                         </div>
 
-                                                        @if (filteredMeasurements.Any())
+                                                        <!-- Existing Measurements Table -->
+                                                        @if (selectedCategory == "Height" || selectedCategory == "Weight" || selectedCategory == "BMI" || selectedCategory == "HeadCircumference")
                                                         {
-                                                            <div class="table-responsive">
-                                                                <table class="table table-hover table-center mb-0">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Record Date</th>
-                                                                            <th>@Categories[selectedCategory]</th>
-                                                                            <th>Result</th>
-                                                                            <th>Rating</th>
-                                                                            <th>Consultation</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        @foreach (var item in filteredMeasurements)
-                                                                        {
+                                                            @if (filteredMeasurements.Any())
+                                                            {
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-hover table-center mb-0">
+                                                                        <thead>
                                                                             <tr>
-                                                                                <td>@item.RecordDate.ToShortDateString()</td>
-                                                                                <td>@GetMeasurementValue(item, selectedCategory)</td>
-                                                                                <td class="@(IsNormal(GetResult(item, selectedCategory), selectedCategory) ? "text-primary" : "text-danger")">
-                                                                                    @GetResult(item, selectedCategory)
-                                                                                </td>
-                                                                                <td>@GetRating(item, selectedCategory)</td>
-                                                                                <td>
-                                                                                    @if (ShouldShowConsultationButton(item, selectedCategory))
-                                                                                    {
-                                                                                        <a href="javascript:void(0);" class="btn btn-sm bg-danger-light" @onclick="() => NavigateToConsultation()">
-                                                                                            <i class="fas fa-exclamation-circle"></i> Consult
-                                                                                        </a>
-                                                                                    }
-                                                                                </td>
+                                                                                <th>Record Date</th>
+                                                                                <th>@Categories[selectedCategory]</th>
+                                                                                <th>Result</th>
+                                                                                <th>Rating</th>
+                                                                                <th>Consultation</th>
                                                                             </tr>
-                                                                        }
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var item in filteredMeasurements)
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>@item.RecordDate.ToShortDateString() (@GetAgeAtMeasurement(item.RecordDate))</td>
+                                                                                    <td>@GetMeasurementValue(item, selectedCategory)</td>
+                                                                                    <td class="@(IsNormal(GetResult(item, selectedCategory), selectedCategory) ? "text-primary" : "text-danger")">
+                                                                                        @GetResult(item, selectedCategory)
+                                                                                    </td>
+                                                                                    <td>@GetRating(item, selectedCategory)</td>
+                                                                                    <td>
+                                                                                        @if (ShouldShowConsultationButton(item, selectedCategory))
+                                                                                        {
+                                                                                            <a href="javascript:void(0);" class="btn btn-sm bg-danger-light" @onclick="() => NavigateToConsultation()">
+                                                                                                <i class="fas fa-exclamation-circle"></i> Consult
+                                                                                            </a>
+                                                                                        }
+                                                                                    </td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <p class="text-muted text-center">No records found for @Categories[selectedCategory].</p>
+                                                            }
                                                         }
-                                                        else
+
+                                                        <!-- New Table for SleepPattern, PhysicalActivity, NutritionalIntake, HealthMetric -->
+                                                        @if (selectedCategory == "SleepPattern")
                                                         {
-                                                            <p class="text-muted text-center">No records found for @Categories[selectedCategory].</p>
+                                                            @if (sleepPatterns.Any())
+                                                            {
+                                                                <div class="table-responsive mt-4">
+                                                                    <table class="table table-hover table-center mb-0">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Record Date</th>
+                                                                                <th>Bedtime</th>
+                                                                                <th>Wake Time</th>
+                                                                                <th>Nap Duration (hrs)</th>
+                                                                                <th>Sleep Quality</th>
+                                                                                <th>Rating</th>
+                                                                                <th>Consultation</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var item in sleepPatterns.OrderByDescending(s => s.RecordDate))
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>@item.RecordDate.ToShortDateString() (@GetAgeAtMeasurement(item.RecordDate))</td>
+                                                                                    <td>@item.Bedtime.ToString(@"hh\:mm")</td>
+                                                                                    <td>@item.WakeTime.ToString(@"hh\:mm")</td>
+                                                                                    <td>@(item.NapDuration?.ToString("F2") ?? "N/A")</td>
+                                                                                    <td>@item.SleepQuality</td>
+                                                                                    <td>@item.SleepQualityRating</td>
+                                                                                    <td>
+                                                                                        @if (item.Status != "Booked" && item.SleepQualityRating != "Good")
+                                                                                        {
+                                                                                            <a href="javascript:void(0);" class="btn btn-sm bg-danger-light" @onclick="() => NavigateToConsultation()">
+                                                                                                <i class="fas fa-exclamation-circle"></i> Consult
+                                                                                            </a>
+                                                                                        }
+                                                                                    </td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <p class="text-muted text-center">No sleep pattern records found.</p>
+                                                            }
+                                                        }
+                                                        @if (selectedCategory == "PhysicalActivity")
+                                                        {
+                                                            @if (physicalActivities.Any())
+                                                            {
+                                                                <div class="table-responsive mt-4">
+                                                                    <table class="table table-hover table-center mb-0">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Record Date</th>
+                                                                                <th>Activity Type</th>
+                                                                                <th>Duration (hrs)</th>
+                                                                                <th>Intensity</th>
+                                                                                <th>Consultation</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var item in physicalActivities.OrderByDescending(p => p.RecordDate))
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>@item.RecordDate.ToShortDateString() (@GetAgeAtMeasurement(item.RecordDate))</td>
+                                                                                    <td>@item.ActivityType</td>
+                                                                                    <td>@item.Duration.ToString("F2")</td>
+                                                                                    <td>@item.Intensity</td>
+                                                                                    <td>
+                                                                                        @if (item.Status != "Booked" && item.Intensity == "High" && item.Duration > 2)
+                                                                                        {
+                                                                                            <a href="javascript:void(0);" class="btn btn-sm bg-danger-light" @onclick="() => NavigateToConsultation()">
+                                                                                                <i class="fas fa-exclamation-circle"></i> Consult
+                                                                                            </a>
+                                                                                        }
+                                                                                    </td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <p class="text-muted text-center">No physical activity records found.</p>
+                                                            }
+                                                        }
+                                                        @if (selectedCategory == "NutritionalIntake")
+                                                        {
+                                                            @if (nutritionalIntakes.Any())
+                                                            {
+                                                                <div class="table-responsive mt-4">
+                                                                    <table class="table table-hover table-center mb-0">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Record Date</th>
+                                                                                <th>Food Item</th>
+                                                                                <th>Serving Size</th>
+                                                                                <th>Intake Date</th>
+                                                                                <th>Consultation</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var item in nutritionalIntakes.OrderByDescending(n => n.RecordDate))
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>@(item.RecordDate?.ToShortDateString() ?? "N/A") (@GetAgeAtMeasurement(item.RecordDate ?? DateTime.MinValue))</td>
+                                                                                    <td>@item.FoodItem.Name</td>
+                                                                                    <td>@(item.ServingSize?.ToString("F2") ?? "N/A")</td>
+                                                                                    <td>@(item.IntakeDate?.ToShortDateString() ?? "N/A")</td>
+                                                                                    <td>
+                                                                                        @if (item.Status != "Booked" && item.ServingSize > 5) // Example condition
+                                                                                        {
+                                                                                            <a href="javascript:void(0);" class="btn btn-sm bg-danger-light" @onclick="() => NavigateToConsultation()">
+                                                                                                <i class="fas fa-exclamation-circle"></i> Consult
+                                                                                            </a>
+                                                                                        }
+                                                                                    </td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <p class="text-muted text-center">No nutritional intake records found.</p>
+                                                            }
+                                                        }
+                                                        @if (selectedCategory == "HealthMetric")
+                                                        {
+                                                            @if (healthMetrics.Any())
+                                                            {
+                                                                <div class="table-responsive mt-4">
+                                                                    <table class="table table-hover table-center mb-0">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Metric Date</th>
+                                                                                <th>Temperature (°C)</th>
+                                                                                <th>Heart Rate (bpm)</th>
+                                                                                <th>Blood Pressure</th>
+                                                                                <th>Allergy Symptoms</th>
+                                                                                <th>Medication Use</th>
+                                                                                <th>Consultation</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var item in healthMetrics.OrderByDescending(h => h.MetricDate))
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>@item.MetricDate.ToShortDateString() (@GetAgeAtMeasurement(item.MetricDate))</td>
+                                                                                    <td>@(item.Temperature?.ToString("F1") ?? "N/A")</td>
+                                                                                    <td>@(item.HeartRate?.ToString() ?? "N/A")</td>
+                                                                                    <td>@(item.BloodPressure ?? "N/A")</td>
+                                                                                    <td>@(item.AllergySymptoms ?? "N/A")</td>
+                                                                                    <td>@(item.MedicationUse ?? "N/A")</td>
+                                                                                    <td>
+                                                                                        @if (item.Temperature > 38 || item.HeartRate > 100) // Example condition
+                                                                                        {
+                                                                                            <a href="javascript:void(0);" class="btn btn-sm bg-danger-light" @onclick="() => NavigateToConsultation()">
+                                                                                                <i class="fas fa-exclamation-circle"></i> Consult
+                                                                                            </a>
+                                                                                        }
+                                                                                    </td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <p class="text-muted text-center">No health metric records found.</p>
+                                                            }
                                                         }
                                                     }
                                                 </div>
@@ -293,7 +482,7 @@
     private string? userFullName;
     private string? birthDate;
     private int? age;
-    private string? location;
+    private string? email;
     private string activeTab = "Dashboard"; // Sidebar selection
     private string activeContentTab = "Appointments"; // Tab content selection
     private int unreadMessages = 23;
@@ -301,31 +490,52 @@
     [Parameter] public Guid ChildId { get; set; }
     private List<Child> children = new();
     private Child? child { get; set; }
+    private Guid parentId { get; set; }
     private List<Measurement> measurements = new();
     private List<Measurement> filteredMeasurements = new();
     private string selectedCategory = "Height";
+    private List<SleepPattern> sleepPatterns = new();
+    private List<PhysicalActivity> physicalActivities = new();
+    private List<NutritionalIntake> nutritionalIntakes = new();
+    private List<HealthMetric> healthMetrics = new();
 
     protected override async Task OnInitializedAsync()
     {
-        children = await MeasurementService.GetChildrenByParent(Guid.Parse("f1854b09-f097-442e-9917-67e95ffb1e34"));
-        SelectCategory(selectedCategory);
-
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+
+        var parent = await UserManager.FindByEmailAsync(user.FindFirst(ClaimTypes.Email)?.Value);
+
+        parentId = Guid.Parse(parent.Id);
+        children = await MeasurementService.GetChildrenByParent(parentId);
+        SelectCategory(selectedCategory);
+
         if (user.Identity?.IsAuthenticated ?? false)
         {
-            userFullName = user.FindFirst("name")?.Value ?? "Richard Wilson";
+            userFullName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Richard Wilson";
             userAvatar = user.FindFirst("avatar")?.Value ?? "assets/img/patients/patient.jpg";
-            birthDate = user.FindFirst("birthdate")?.Value ?? "24 Jul 1983";
-            location = user.FindFirst("location")?.Value ?? "Newyork, USA";
+            birthDate = user.FindFirst("birthdate")?.Value;
+            email = user.FindFirst(ClaimTypes.Email)?.Value;
             age = CalculateAge(birthDate);
         }
         LoadSampleData();
     }
 
+    // private async Task SelectChild(Guid childId)
+    // {
+    //     (child, measurements) = await MeasurementService.GetChildWithMeasurementsAsync(childId);
+    //     selectedCategory = Categories.Keys.FirstOrDefault();
+    //     SelectCategory(selectedCategory);
+    //     StateHasChanged();
+    // }
+
     private async Task SelectChild(Guid childId)
     {
         (child, measurements) = await MeasurementService.GetChildWithMeasurementsAsync(childId);
+        sleepPatterns = await MeasurementService.GetSleepPatternsByChildAsync(childId);
+        physicalActivities = await MeasurementService.GetPhysicalActivitiesByChildAsync(childId);
+        nutritionalIntakes = await MeasurementService.GetNutritionalIntakesByChildAsync(childId);
+        healthMetrics = await MeasurementService.GetHealthMetricsByChildAsync(childId);
         selectedCategory = Categories.Keys.FirstOrDefault();
         SelectCategory(selectedCategory);
         StateHasChanged();
@@ -358,6 +568,15 @@
         activeTab = tab;
         if (tab == "Dashboard") activeContentTab = "Appointments"; // Reset to default tab when switching to Dashboard
         StateHasChanged();
+
+        if (tab != "Measurement History")
+        {
+            child = null;
+            measurements = new List<Measurement>();
+            filteredMeasurements = new List<Measurement>();
+        }
+
+        activeTab = tab;
     }
 
     private void SetContentTab(string tab) => activeContentTab = tab;
@@ -381,12 +600,16 @@
 
 
     private readonly Dictionary<string, string> Categories = new()
-    {
-        { "Height", "Height" },
-        { "Weight", "Weight" },
-        { "BMI", "BMI" },
-        { "HeadCircumference", "Head Circumference" }
-    };
+{
+    { "Height", "Height" },
+    { "Weight", "Weight" },
+    { "BMI", "BMI" },
+    { "HeadCircumference", "Head Circumference" },
+    { "SleepPattern", "Sleep Pattern" },
+    { "PhysicalActivity", "Physical Activity" },
+    { "NutritionalIntake", "Nutritional Intake" },
+    { "HealthMetric", "Health Metrics" }
+};
 
     private void SelectCategory(string category)
     {
@@ -444,6 +667,24 @@
             return !IsNormal(rating, category);
         }
         return !IsNormal(result, category);
+    }
+
+    private string GetAgeAtMeasurement(DateTime recordDate)
+    {
+        var age = recordDate - child!.DateOfBirth;
+        return $"{age.Days / 365} years {age.Days % 365 / 30} months";
+    }
+    private void GoBackToChildSelection()
+    {
+        child = null;
+        measurements = new List<Measurement>();
+        filteredMeasurements = new List<Measurement>();
+        sleepPatterns = new List<SleepPattern>();
+        physicalActivities = new List<PhysicalActivity>();
+        nutritionalIntakes = new List<NutritionalIntake>();
+        healthMetrics = new List<HealthMetric>();
+        selectedCategory = Categories.Keys.FirstOrDefault();
+        StateHasChanged(); 
     }
 
     private void NavigateToConsultation() => NavigationManager.NavigateTo("/consultation-booking");
