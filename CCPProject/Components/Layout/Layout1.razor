@@ -1,0 +1,254 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+<title>Doccure</title>
+
+<!-- Favicons -->
+<link type="image/x-icon" href="assets/img/favicon.png" rel="icon">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+
+<!-- Fontawesome CSS -->
+<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+
+<!-- Main CSS -->
+<link rel="stylesheet" href="assets/css/style.css">
+
+<div class="main-wrapper">
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar navbar-expand-lg header-nav">
+            <div class="navbar-header">
+                <a id="mobile_btn" href="javascript:void(0);" @onclick="ToggleMobileMenu">
+                    <span class="bar-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </a>
+                <a href="/" class="navbar-brand logo">
+                    <img src="assets/img/logo.png" class="img-fluid" alt="Logo" />
+                </a>
+            </div>
+            <div class="main-menu-wrapper @(isMobileMenuOpen ? "show" : "")">
+                <div class="menu-header">
+                    <a href="/" class="menu-logo">
+                        <img src="assets/img/logo.png" class="img-fluid" alt="Logo" />
+                    </a>
+                    <a id="menu_close" class="menu-close" href="javascript:void(0);" @onclick="ToggleMobileMenu">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+                <ul class="main-nav">
+                    <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Home</a></li>
+                    <li class="has-submenu @(activeMenu == "Doctors" ? "active" : "")">
+                        <a @onclick='() => ToggleSubmenu("Doctors")' @onclick:preventDefault>Doctors <i class="fas fa-chevron-down"></i></a>
+                        @if (activeMenu == "Doctors")
+                        {
+                            <ul class="submenu show">
+                                <li><a @onclick='() => NavigateTo("/doctor-dashboard")' @onclick:preventDefault>Doctor Dashboard</a></li>
+                                <li><a @onclick='() => NavigateTo("/appointments")' @onclick:preventDefault>Appointments</a></li>
+                                <li><a @onclick='() => NavigateTo("/my-patients")' @onclick:preventDefault>Patients List</a></li>
+                            </ul>
+                        }
+                    </li>
+                    <li class="has-submenu @(activeMenu == "Patients" ? "active" : "")">
+                        <a @onclick='() => ToggleSubmenu("Patients")' @onclick:preventDefault>Patients <i class="fas fa-chevron-down"></i></a>
+                        @if (activeMenu == "Patients")
+                        {
+                            <ul class="submenu show">
+                                <li><a @onclick='() => NavigateTo("/search")' @onclick:preventDefault>Search Doctor</a></li>
+                                <li><a @onclick='() => NavigateTo("/doctor-profile")' @onclick:preventDefault>Doctor Profile</a></li>
+                                <li><a @onclick='() => NavigateTo("/booking")' @onclick:preventDefault>Booking</a></li>
+                                <li><a @onclick='() => NavigateTo("/patient-dashboard")' @onclick:preventDefault>Patient Dashboard</a></li>
+                            </ul>
+                        }
+                    </li>
+                    @if (isAuthenticated)
+                    {
+                        <li><a @onclick="Logout" @onclick:preventDefault>Logout</a></li>
+                    }
+                    else
+                    {
+                        <li class="login-link"><a @onclick='() => NavigateTo("/login")' @onclick:preventDefault>Login / Signup</a></li>
+                    }
+                </ul>
+            </div>
+            <ul class="nav header-navbar-rht">
+                <li class="nav-item contact-item">
+                    <div class="header-contact-img">
+                        <i class="far fa-hospital"></i>
+                    </div>
+                    <div class="header-contact-detail">
+                        <p class="contact-header">Contact</p>
+                        <p class="contact-info-header">+1 315 369 5943</p>
+                    </div>
+                </li>
+                @if (!isAuthenticated)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link header-login" @onclick:preventDefault @onclick='() => NavigateTo("/signin")'>Login / Signup</a>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item dropdown has-arrow logged-item">
+                        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" @onclick="ToggleUserDropdown">
+                            <span class="user-img">
+                                <img class="rounded-circle" src="@(userAvatar ?? "assets/img/doctors/doctor-thumb-02.jpg")" width="31" alt="@userFullName">
+                            </span>
+                        </a>
+                        @if (showUserDropdown)
+                        {
+                            <div class="dropdown-menu dropdown-menu-right show">
+                                <div class="user-header">
+                                    <div class="avatar avatar-sm">
+                                        <img src="@(userAvatar ?? "assets/img/doctors/doctor-thumb-02.jpg")" alt="User Image" class="avatar-img rounded-circle">
+                                    </div>
+                                    <div class="user-text">
+                                        <h6>@(userFullName ?? "Unknown User")</h6>
+                                        <p class="text-muted mb-0">@(userRole ?? "User")</p>
+                                    </div>
+                                </div>
+
+                                @if (userRole == "Expert")
+                                {
+                                    <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/expert-dashboard")'>Doctor Dashboard</a>
+                                }
+                                else if (userRole == "Parent")
+                                {
+                                    <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/parent-dashboard")'>Parent Dashboard</a>
+                                }
+                                    <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/profile-settings")'>Profile Settings</a>
+                                <a class="dropdown-item" href="#" @onclick="Logout">Logout</a>
+                            </div>
+                        }
+                    </li>
+                }
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Breadcrumb Component -->
+
+    <!-- Page Content -->
+    <div class="content">
+        @Body
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <div class="container-fluid">
+                <div class="copyright">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-6">
+                            <div class="copyright-text">
+                                <p class="mb-0"><a href="templateshub.net">Templates Hub</a></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-6">
+                            <div class="copyright-menu">
+                                <ul class="policy-menu">
+                                    <li><a href="#" @onclick:preventDefault @onclick='() => NavigateTo("/terms")'>Terms and Conditions</a></li>
+                                    <li><a href="#" @onclick:preventDefault @onclick='() => NavigateTo("/policy")'>Policy</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+@code {
+    // Existing code remains largely unchanged
+    private bool isMobileMenuOpen = false;
+    private string? activeMenu = null;
+    private bool isAuthenticated = false;
+    private string? userName = null;
+    private string? userFullName = null;
+    private string? userRole = null;
+    private string? userAvatar = null;
+    private bool showUserDropdown = false;
+    public List<BreadcrumbItem> Breadcrumbs { get; set; } = new();
+    public string? BreadcrumbTitle { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+
+        if (isAuthenticated)
+        {
+            userName = user.Identity?.Name ?? "User";
+            userFullName = user.FindFirst("name")?.Value ?? userName;
+            userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "User";
+            userAvatar = user.FindFirst("avatar")?.Value ?? "assets/img/doctors/doctor-thumb-02.jpg";
+            if (user.IsInRole("Parent"))
+            {
+                userRole = "Parent";
+            }
+            else if (user.IsInRole("Expert"))
+            {
+                userRole = "Expert";
+            }
+
+        }
+
+        if (!Breadcrumbs.Any())
+        {
+            Breadcrumbs = new List<BreadcrumbItem>
+            {
+                new BreadcrumbItem { Text = "Home", Url = "/", IsActive = false },
+                new BreadcrumbItem { Text = "Page", Url = NavigationManager.Uri, IsActive = true }
+            };
+            BreadcrumbTitle = "Page";
+        }
+    }
+
+    private void ToggleMobileMenu() => isMobileMenuOpen = !isMobileMenuOpen;
+
+    private void ToggleSubmenu(string menu) => activeMenu = activeMenu == menu ? null : menu;
+
+    private void ToggleUserDropdown() => showUserDropdown = !showUserDropdown;
+
+    private void NavigateTo(string uri) => NavigationManager.NavigateTo(uri);
+
+    private async Task Logout()
+    {
+        NavigationManager.NavigateTo("/signout", forceLoad: true);
+    }
+
+    public void SetBreadcrumbs(List<BreadcrumbItem> breadcrumbs, string title)
+    {
+        Breadcrumbs = breadcrumbs ?? new List<BreadcrumbItem>();
+        BreadcrumbTitle = title ?? string.Empty;
+        StateHasChanged();
+    }
+
+    public class BreadcrumbItem
+    {
+        public string Text { get; set; } = "";
+        public string Url { get; set; } = "";
+        public bool IsActive { get; set; }
+    }
+}
+
+
+
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/popper.min.js"></script>
+<script src="assets/js/bootstrap.min.js"></script>
+<script src="assets/js/slick.js"></script>
+<script src="assets/js/script.js"></script>
