@@ -31,28 +31,14 @@
                             <span>Measurement History</span>
                         </a>
                     </li>
-                    <li class="@(ActiveTab == "Messages" ? "active" : "")">
-                        <a @onclick='() => OnTabSelected.InvokeAsync("Messages")'>
-                            <i class="fas fa-comments"></i>
-                            <span>Messages</span>
-                            @if (UnreadMessages > 0)
-                            {
-                                <small class="unread-msg">@UnreadMessages</small>
-                            }
-                        </a>
-                    </li>
+                    
                     <li class="@(ActiveTab == "Parent Profile" ? "active" : "")">
                         <a @onclick='() => NavigateToParentProfile()'>
                             <i class="fas fa-user"></i>
                             <span>Parent Profile</span>
                         </a>
                     </li>
-                    <li class="@(ActiveTab == "Profile" ? "active" : "")">
-                        <a @onclick='() => OnTabSelected.InvokeAsync("Profile")'>
-                            <i class="fas fa-user-cog"></i>
-                            <span>Profile Settings</span>
-                        </a>
-                    </li>
+               
                     <li class="@(ActiveTab == "Password" ? "active" : "")">
                         <a @onclick='() => OnTabSelected.InvokeAsync("Password")'>
                             <i class="fas fa-lock"></i>
