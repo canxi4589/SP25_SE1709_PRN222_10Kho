@@ -31,6 +31,7 @@ namespace CCP.Repositori.Entities
 
         public Guid? SleepPatternId {  get; set; }
 
+        public string? Type { get; set; }
 
         [Required]
         public DateTime BookingDate { get; set; }

@@ -69,7 +69,7 @@
                         <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Measure Your Child</a></li>
                         <li><a @onclick='() => NavigateTo("/expert-list")' @onclick:preventDefault>Expert List</a></li>
                         <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Blog</a></li>
-                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>FAQ</a></li>
+                        <li><a @onclick='() => NavigateTo("/faq")' @onclick:preventDefault>FAQ</a></li>
 
                         
                         @if (isAuthenticated)
@@ -185,19 +185,13 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-bottom">
-            <div class="container-fluid">
+            <div class="container-fluid" style="display: flex; justify-content: center; align-items: center;">
                 <div class="copyright">
                     <div class="row">
-                        <div class="col-md-6 col-lg-6">
-                            <div class="copyright-text">
-                                <p class="mb-0"><a href="templateshub.net">Templates Hub</a></p>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-lg-6">
+                        <div class="col-md-12 col-lg-12">
                             <div class="copyright-menu">
-                                <ul class="policy-menu">
-                                    <li><a href="#" @onclick:preventDefault @onclick='() => NavigateTo("/terms")'>Terms and Conditions</a></li>
-                                    <li><a href="#" @onclick:preventDefault @onclick='() => NavigateTo("/policy")'>Policy</a></li>
+                                <ul class="policy-menu" style="list-style: none; padding: 0; text-align: center;">
+                                    <li><a href="https://github.com/canxi4589/SP25_SE1709_PRN222_10Kho.git">Project by Team 10Kho</a></li>
                                 </ul>
                             </div>
                         </div>

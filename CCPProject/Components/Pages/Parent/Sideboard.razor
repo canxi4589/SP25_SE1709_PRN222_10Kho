@@ -25,10 +25,10 @@
                             <span>Dashboard</span>
                         </a>
                     </li>
-                    <li class="@(ActiveTab == "Favourites" ? "active" : "")">
-                        <a @onclick='() => OnTabSelected.InvokeAsync("Favourites")'>
+                    <li class="@(ActiveTab == "Measurement History" ? "active" : "")">
+                        <a @onclick='() => OnTabSelected.InvokeAsync("Measurement History")'>
                             <i class="fas fa-bookmark"></i>
-                            <span>Favourites</span>
+                            <span>Measurement History</span>
                         </a>
                     </li>
                     <li class="@(ActiveTab == "Messages" ? "active" : "")">

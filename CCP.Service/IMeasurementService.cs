@@ -6,5 +6,6 @@ namespace CCP.Service
     {
         Task<List<Measurement>> GetMeasurementsByChild(Guid childId);
         Task<(Child?, List<Measurement>)> GetChildWithMeasurementsAsync(Guid childId);
+        Task<List<Child>> GetChildrenByParent(Guid parentId);
     }
 }
