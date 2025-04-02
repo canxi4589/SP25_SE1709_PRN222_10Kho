@@ -10,8 +10,8 @@
                 <div class="profile-det-info">
                     <h3>@(UserFullName ?? "Richard Wilson")</h3>
                     <div class="patient-details">
-                        <h5><i class="fas fa-birthday-cake"></i> @(BirthDate ?? "24 Jul 1983"), @(Age ?? 38) years</h5>
-                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> @(Location ?? "Newyork, USA")</h5>
+                        <h5><i class="fas fa-birthday-cake"></i> @(BirthDate ?? string.Empty), @(Age ?? 38) years</h5>
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> @(Email ?? "no email")</h5>
                     </div>
                 </div>
             </div>
@@ -29,22 +29,6 @@
                         <a @onclick='() => OnTabSelected.InvokeAsync("Measurement History")'>
                             <i class="fas fa-bookmark"></i>
                             <span>Measurement History</span>
-                        </a>
-                    </li>
-                    <li class="@(ActiveTab == "Messages" ? "active" : "")">
-                        <a @onclick='() => OnTabSelected.InvokeAsync("Messages")'>
-                            <i class="fas fa-comments"></i>
-                            <span>Messages</span>
-                            @if (UnreadMessages > 0)
-                            {
-                                <small class="unread-msg">@UnreadMessages</small>
-                            }
-                        </a>
-                    </li>
-                    <li class="@(ActiveTab == "Profile" ? "active" : "")">
-                        <a @onclick='() => OnTabSelected.InvokeAsync("Profile")'>
-                            <i class="fas fa-user-cog"></i>
-                            <span>Profile Settings</span>
                         </a>
                     </li>
                     <li class="@(ActiveTab == "Password" ? "active" : "")">
@@ -70,7 +54,7 @@
     [Parameter] public string? UserFullName { get; set; }
     [Parameter] public string? BirthDate { get; set; }
     [Parameter] public int? Age { get; set; }
-    [Parameter] public string? Location { get; set; }
+    [Parameter] public string? Email { get; set; }
     [Parameter] public string ActiveTab { get; set; } = "Dashboard";
     [Parameter] public int UnreadMessages { get; set; }
     [Parameter] public EventCallback<string> OnTabSelected { get; set; }
