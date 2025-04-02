@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
 // Add services to the container.
+builder.Services.AddRazorPages();
+
 builder.Services.AddHttpClient();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -32,9 +34,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseStatusCodePagesWithRedirects("/error1?code={0}");
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.MapRazorPages();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
