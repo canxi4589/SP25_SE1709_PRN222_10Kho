@@ -19,28 +19,25 @@ namespace CCP.Service
 
         public async Task<IEnumerable<ChildDto>> GetChildrenAsync(Guid userId)
         {
-            // Vì AppUser.Id vẫn là string, chuyển Guid sang string
-            var userIdStr = userId.ToString();
             var children = await _context.Children
                 .Include(c => c.PhysicalActivities)
                 .Include(c => c.SleepPatterns)
                 .Include(c => c.NutritionalIntakes)
                 .Include(c => c.HealthMetrics)
-                .Where(c => c.UserId == userIdStr)
+                .Where(c => c.UserId == userId.ToString())
                 .ToListAsync();
 
-            return children.Select(c => MapChildToDto(c));
+            return children.Select(MapChildToDto);
         }
 
         public async Task<ChildDto?> GetChildByIdAsync(Guid childId, Guid userId)
         {
-            var userIdStr = userId.ToString();
             var child = await _context.Children
                 .Include(c => c.PhysicalActivities)
                 .Include(c => c.SleepPatterns)
                 .Include(c => c.NutritionalIntakes)
                 .Include(c => c.HealthMetrics)
-                .FirstOrDefaultAsync(c => c.Id == childId && c.UserId == userIdStr);
+                .FirstOrDefaultAsync(c => c.Id == childId && c.UserId == userId.ToString());
 
             return child == null ? null : MapChildToDto(child);
         }
@@ -51,7 +48,7 @@ namespace CCP.Service
             {
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
-                Gender = dto.Gender, // Giả sử kiểu của Gender trong entity và DTO là giống nhau
+                Gender = dto.Gender,
                 DateOfBirth = dto.DateOfBirth,
                 UserId = userId.ToString()
             };
@@ -65,9 +62,8 @@ namespace CCP.Service
 
         public async Task<ChildDto?> UpdateChildAsync(Guid childId, Guid userId, ChildDto dto)
         {
-            var userIdStr = userId.ToString();
             var repo = _unitOfWork.Repository<Child>();
-            var child = await repo.FindAsync(c => c.Id == childId && c.UserId == userIdStr);
+            var child = await repo.FindAsync(c => c.Id == childId && c.UserId == userId.ToString());
 
             if (child == null) return null;
 
@@ -83,9 +79,8 @@ namespace CCP.Service
 
         public async Task<bool> DeleteChildAsync(Guid childId, Guid userId)
         {
-            var userIdStr = userId.ToString();
             var repo = _unitOfWork.Repository<Child>();
-            var child = await repo.FindAsync(c => c.Id == childId && c.UserId == userIdStr);
+            var child = await repo.FindAsync(c => c.Id == childId && c.UserId == userId.ToString());
 
             if (child == null) return false;
 
@@ -97,7 +92,6 @@ namespace CCP.Service
 
         public async Task<ParentDto?> GetParentProfileAsync(Guid userId)
         {
-            var userIdStr = userId.ToString();
             var user = await _context.Users
                 .Include(u => u.Children)
                     .ThenInclude(c => c.PhysicalActivities)
@@ -107,28 +101,16 @@ namespace CCP.Service
                     .ThenInclude(c => c.NutritionalIntakes)
                 .Include(u => u.Children)
                     .ThenInclude(c => c.HealthMetrics)
-                .FirstOrDefaultAsync(u => u.Id == userIdStr);
+                .FirstOrDefaultAsync(u => u.Id == userId.ToString());
 
             if (user == null) return null;
 
-            return new ParentDto
-            {
-                // Chuyển đổi user.Id (string) sang Guid (giả sử user.Id luôn chứa Guid hợp lệ)
-                Id = Guid.Parse(user.Id),
-                FullName = user.FullName,
-                Email = user.Email,
-                IsActive = user.IsActive,
-                RegistrationDate = user.RegistrationDate,
-                LastLogin = user.LastLogin,
-                DateOfBirth = user.DateOfBirth,
-                Children = user.Children?.Select(c => MapChildToDto(c)).ToList()
-            };
+            return MapAppUserToParentDto(user);
         }
 
         public async Task<bool> UpdateParentProfileAsync(Guid userId, ParentDto dto)
         {
-            var userIdStr = userId.ToString();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userIdStr);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId.ToString());
             if (user == null) return false;
 
             user.FullName = dto.FullName;
@@ -147,9 +129,22 @@ namespace CCP.Service
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Email == email);
 
-            if (user == null) return null;
+            return user != null && Guid.TryParse(user.Id, out var guidId) ? guidId : null;
+        }
 
-            return Guid.TryParse(user.Id, out var guidId) ? guidId : null;
+        private ParentDto MapAppUserToParentDto(AppUser user)
+        {
+            return new ParentDto
+            {
+                Id = Guid.Parse(user.Id),
+                FullName = user.FullName,
+                Email = user.Email,
+                IsActive = user.IsActive,
+                RegistrationDate = user.RegistrationDate,
+                LastLogin = user.LastLogin,
+                DateOfBirth = user.DateOfBirth,
+                Children = user.Children?.Select(MapChildToDto).ToList()
+            };
         }
 
         private ChildDto MapChildToDto(Child c)

@@ -41,6 +41,12 @@
                             }
                         </a>
                     </li>
+                    <li class="@(ActiveTab == "Parent Profile" ? "active" : "")">
+                        <a @onclick='() => NavigateToParentProfile()'>
+                            <i class="fas fa-user"></i>
+                            <span>Parent Profile</span>
+                        </a>
+                    </li>
                     <li class="@(ActiveTab == "Profile" ? "active" : "")">
                         <a @onclick='() => OnTabSelected.InvokeAsync("Profile")'>
                             <i class="fas fa-user-cog"></i>
@@ -77,4 +83,9 @@
     [Parameter] public EventCallback OnLogout { get; set; }
 
     private Task Logout() => OnLogout.InvokeAsync();
+
+    private void NavigateToParentProfile()
+    {
+        NavigationManager.NavigateTo("/parent-profile");
+    }
 }
