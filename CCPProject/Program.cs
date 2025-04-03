@@ -1,10 +1,15 @@
 using CCP.Repositori.Repository;
 using CCP.Service;
+using CCP.Repositori.Repository;
+using CCP.Service.AppointmentService;
 using CCP.Service.EmailService;
+using CCP.Service.ExpertService;
 using CCPProject.Components;
 using CCPProject.Extension;
 using HCP.Repository.DatabaseExtension;
 using MudBlazor.Services;
+using CCP.Service.Integration.BlobStorage;
+using CCP.Service.BackgroundServices;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,8 +25,14 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 builder.Services.AddScoped<IMeasurementService, MeasurementService>();
+builder.Services.AddScoped<IExpertService, ExpertService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+builder.Services.AddBlobService(config);
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
+builder.Services.AddHostedService<AppointmentStatusUpdateService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMudServices();
 

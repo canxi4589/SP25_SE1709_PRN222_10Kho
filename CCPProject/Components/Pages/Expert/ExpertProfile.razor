@@ -1,0 +1,326 @@
+﻿@page "/expert-profile"
+@using CCP.Service.DTOs
+@using CCP.Service.ExpertService
+@using CCP.Repositori.Entities
+@using CCP.Service.Integration.BlobStorage
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using CCPProject.Components.Layout
+@layout ExpertDashboard
+@attribute [Authorize]
+@inject IExpertService ExpertService
+@inject UserManager<AppUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject IBlobStorageService BlobStorageService
+@rendermode InteractiveServer
+
+<PageTitle>Expert Profile</PageTitle>
+
+<div class="container mt-2">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Expert Profile</h3>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading profile...</p>
+                        </div>
+                    }
+                    else if (expert == null)
+                    {
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-info-circle me-2"></i>
+                            No expert profile found. Click the button above to create one.
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="expert" OnValidSubmit="HandleValidSubmit">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="alert alert-danger" role="alert" />
+
+                            <div class="row mb-3">
+                                <label for="name" class="col-md-4 col-form-label fw-bold">Name</label>
+                                <div class="col-md-8">
+                                    <InputText id="name" class="form-control" @bind-Value="expert.Name" placeholder="Enter your name" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="specialty" class="col-md-4 col-form-label fw-bold">Specialty</label>
+                                <div class="col-md-8">
+                                    <InputText id="specialty" class="form-control" @bind-Value="expert.Specialty" disabled />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="contactInfo" class="col-md-4 col-form-label fw-bold">Contact Info</label>
+                                <div class="col-md-8">
+                                    <InputText id="contactInfo" class="form-control" @bind-Value="expert.ContactInfo" placeholder="Enter your contact information" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="certificate" class="col-md-4 col-form-label fw-bold">Certificate</label>
+                                <div class="col-md-8">
+                                    @if (!string.IsNullOrEmpty(expert.CertificateUrl))
+                                    {
+                                        <div class="mb-2">
+                                            <img src="@expert.CertificateUrl" alt="Certificate" class="img-thumbnail certificate-preview" />
+                                            <button type="button" class="btn btn-danger btn-sm mt-2" @onclick="RemoveCertificate">
+                                                <i class="bi bi-trash"></i> Remove
+                                            </button>
+                                        </div>
+                                    }
+                                    <InputFile id="certificate" class="form-control" OnChange="@HandleFileSelection" accept=".jpg,.jpeg,.png,.pdf" />
+                                    @if (certificateFileName != null)
+                                    {
+                                        <small class="form-text text-muted mt-1 d-block">
+                                            Selected file: @certificateFileName
+                                        </small>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="price" class="col-md-4 col-form-label fw-bold">Price</label>
+                                <div class="col-md-8">
+                                    <InputNumber id="price" class="form-control" @bind-Value="expert.Price" placeholder="Enter your price" />
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <span>Saving...</span>
+                                    }
+                                    else
+                                    {
+                                        <span><i class="bi bi-save me-2"></i>Save Changes</span>
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
+
+                        @if (saveMessage != null)
+                        {
+                            <div class="alert @alertClass mt-3 alert-dismissible fade show" role="alert">
+                                @saveMessage
+                                <button type="button" class="btn-close" @onclick="() => { saveMessage = null; StateHasChanged(); }" aria-label="Close"></button>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ExpertDTO expert;
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private string saveMessage;
+    private string alertClass;
+    private byte[] certificateFileContent;
+    private string certificateFileName;
+    private string certificateContentType;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity.IsAuthenticated)
+            {
+                var userId = user.FindFirst(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userId != null)
+                {
+                    var appUser = await UserManager.FindByIdAsync(userId);
+                    if (appUser != null)
+                    {
+                        expert = await ExpertService.GetExpertByUserIdAsync(userId);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            saveMessage = $"Error loading profile: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            isSubmitting = true;
+            var updatedExpert = await ExpertService.UpdateExpertAsync(expert, certificateFileContent, certificateFileName, certificateContentType);
+            saveMessage = "Profile updated successfully!";
+            alertClass = "alert-success";
+            expert = updatedExpert;
+            certificateFileContent = null;
+            certificateFileName = null;
+            certificateContentType = null;
+        }
+        catch (Exception ex)
+        {
+            saveMessage = $"Error updating profile: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+        {
+            certificateFileContent = null;
+            certificateFileName = null;
+            certificateContentType = null;
+            saveMessage = "No file selected.";
+            alertClass = "alert-warning";
+            StateHasChanged();
+            return;
+        }
+
+        // Validate file type based on extension
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
+        var fileExtension = Path.GetExtension(file.Name)?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
+        {
+            certificateFileContent = null;
+            certificateFileName = null;
+            certificateContentType = null;
+            saveMessage = "Invalid file type. Please upload a JPG, JPEG, PNG, or PDF file.";
+            alertClass = "alert-danger";
+            StateHasChanged();
+            return;
+        }
+
+        // Validate file size (e.g., max 5MB)
+        const long maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.Size > maxFileSize)
+        {
+            certificateFileContent = null;
+            certificateFileName = null;
+            certificateContentType = null;
+            saveMessage = "File is too large. Maximum allowed size is 5MB.";
+            alertClass = "alert-danger";
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            // Read the file content into a byte array
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            certificateFileContent = memoryStream.ToArray();
+            certificateFileName = file.Name;
+
+            // Determine content type if not provided
+            certificateContentType = file.ContentType;
+            if (string.IsNullOrEmpty(certificateContentType))
+            {
+                var contentTypeMap = new Dictionary<string, string>
+                {
+                    { ".jpg", "image/jpeg" },
+                    { ".jpeg", "image/jpeg" },
+                    { ".png", "image/png" },
+                    { ".pdf", "application/pdf" }
+                };
+                certificateContentType = contentTypeMap.TryGetValue(fileExtension, out var type) ? type : "application/octet-stream";
+            }
+
+            saveMessage = "File selected successfully.";
+            alertClass = "alert-success";
+        }
+        catch (Exception ex)
+        {
+            certificateFileContent = null;
+            certificateFileName = null;
+            certificateContentType = null;
+            saveMessage = $"Error selecting file: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveCertificate()
+    {
+        expert.CertificateUrl = null;
+        certificateFileContent = null;
+        certificateFileName = null;
+        certificateContentType = null;
+        StateHasChanged();
+    }
+
+    private void CreateProfile()
+    {
+        NavigationManager.NavigateTo("/create-expert-profile");
+    }
+}
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+
+    .certificate-preview {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: cover;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        border-color: #007bff;
+    }
+
+    .btn-primary {
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .alert {
+        border-radius: 5px;
+    }
+</style>

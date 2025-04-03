@@ -14,7 +14,7 @@ namespace CCP.Service
         {
             int ageInYears = CalculateAgeFromDateOfBirth(input.DateOfBirth);
             if (ageInYears < 1) ageInYears = 1;
-            if (ageInYears > 10) ageInYears = 10;
+            if (ageInYears > 20) ageInYears = 20;
             var gender = input.Gender;
 
             float heightStandard = gender == Gender.Male ? MeasurementStandards.MaleHeightStandard.GetValueOrDefault(ageInYears, 0)
