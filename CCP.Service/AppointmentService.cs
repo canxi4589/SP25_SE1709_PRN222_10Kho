@@ -38,6 +38,7 @@ namespace CCP.Service
                 BookingDate = a.BookingDate,
                 Status = a.Status,
                 Price = a.Price
+                
             });
         }
     }

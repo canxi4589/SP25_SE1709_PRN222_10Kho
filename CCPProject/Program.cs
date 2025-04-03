@@ -3,6 +3,13 @@ using CCP.Service;
 using CCP.Repositori.Repository;
 using CCP.Service.AppointmentService;
 using CCP.Service.EmailService;
+<<<<<<<<< Temporary merge branch 1
+using CCP.Service.ExpertService;
+=========
+using CCP.Service.ExpertService;
+=========
+using CCP.Service.ExpertService;
+=========
 using CCP.Services;
 using CCP.Service.ExpertService;
 using CCPProject.Components;
@@ -21,11 +28,12 @@ builder.Services.AddHttpClient();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
-builder.Services.AddScoped<IMeasurementService, MeasurementService>();
 builder.Services.AddScoped<IExpertService1,ExpertService1>();
+
+builder.Services.AddScoped<IExpertService1,ExpertService1>();
+
+builder.Services.AddScoped<IExpertService1,ExpertService1>();
+
 builder.Services.AddScoped<IParentProfileService, ParentProfileService>(); 
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IMeasurementInputService, MeasurementInputService>();
@@ -41,6 +49,8 @@ builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
 builder.Services.AddHostedService<AppointmentStatusUpdateService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<Ivnpay,VnPay>();
+
 builder.Services.AddMudServices();
 
 var app = builder.Build();

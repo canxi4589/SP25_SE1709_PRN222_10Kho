@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace HCP.Service.Integrations.Currency
+namespace CCP.Service.Currency
 {
     public static class CurrencyService
     {

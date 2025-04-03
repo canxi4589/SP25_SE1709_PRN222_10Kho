@@ -11,5 +11,7 @@ namespace CCP.Services
         Task<List<PhysicalActivity>> GetChildPhysicalActivities(Guid childId);
         Task<PhysicalActivity> AddPhysicalActivity(PhysicalActivity activity);
         Task BookAppointment(Appointment activity);
+        Task<List<Measurement>> GetChildMeasurements(Guid childId);
+        Task<Measurement> AddMeasurement(Measurement measurement);
     }
 }

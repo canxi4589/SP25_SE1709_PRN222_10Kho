@@ -24,8 +24,5 @@ namespace CCP.Service.DTOs
         public Guid? NutritionalIntake { get; set; }
         public Guid? SleepPatternId { get; set; }
         public string? Type { get; set; }
-        // Optional: Add child name or parent name if needed
-        //public string ChildName { get; set; }
-        //public string ParentName { get; set; }
     }
 }

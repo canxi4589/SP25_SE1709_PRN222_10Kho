@@ -71,7 +71,6 @@ namespace CCP.Service
             }
             catch (Exception ex)
             {
-                // Log lỗi nếu cần
                 Console.WriteLine($"[Error] Saving measurement failed: {ex.Message}");
                 return false;
             }

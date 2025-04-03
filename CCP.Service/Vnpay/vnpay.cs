@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CCP.Repositori.Entities;
+using CCP.Service.Currency;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Globalization;
 using System.Net.Http.Headers;
@@ -47,6 +49,60 @@ namespace CCP.Service.Vnpay
             return paymentUrl;
 
         }
+        public string CreatePaymentUrl1(Appointment a)
+        {
+            string returnUrl = "https://localhost:7022/success";
+            var vnPay = new VnPayLibrary();
+            ExchangRate exchangRate = new ExchangRate();
+            double exchangeRate = exchangRate.GetUsdToVndExchangeRateAsync().Result;
+            var AmountInUsd = Convert.ToDouble(a.Price, CultureInfo.InvariantCulture);
+            double amountInVnd = Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
+
+            vnPay.AddRequestData("vnp_Amount", (amountInVnd).ToString());
+            vnPay.AddRequestData("vnp_Command", "pay");
+            vnPay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            vnPay.AddRequestData("vnp_CurrCode", "VND");
+            vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+            vnPay.AddRequestData("vnp_Locale", "vn");
+            vnPay.AddRequestData("vnp_OrderInfo", $"Thanh toan don hang: {Guid.NewGuid()}");
+            vnPay.AddRequestData("vnp_OrderType", "other");
+            vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
+            vnPay.AddRequestData("vnp_TmnCode", "7CY9UEAF");
+            vnPay.AddRequestData("vnp_TxnRef", Guid.NewGuid().ToString());
+            vnPay.AddRequestData("vnp_Version", "2.1.0");
+
+            string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T");
+            return paymentUrl;
+
+        }
+        public async Task<string> CreatePaymentUrlAsync(Appointment a)
+        {
+            string returnUrl = "https://localhost:7022/success";
+            var vnPay = new VnPayLibrary();
+            ExchangRate exchangRate = new ExchangRate();
+
+            double exchangeRate = await exchangRate.GetUsdToVndExchangeRateAsync();
+
+            var AmountInUsd = Convert.ToDouble(a.Price, CultureInfo.InvariantCulture);
+            double amountInVnd = Math.Round(exchangRate.ConvertUsdToVnd(AmountInUsd, exchangeRate));
+
+            vnPay.AddRequestData("vnp_Amount", (amountInVnd * 100).ToString());
+            vnPay.AddRequestData("vnp_Command", "pay");
+            vnPay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            vnPay.AddRequestData("vnp_CurrCode", "VND");
+            vnPay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+            vnPay.AddRequestData("vnp_Locale", "vn");
+            vnPay.AddRequestData("vnp_OrderInfo", $"Thanh toan don hang: {Guid.NewGuid()}");
+            vnPay.AddRequestData("vnp_OrderType", "other");
+            vnPay.AddRequestData("vnp_ReturnUrl", returnUrl);
+            vnPay.AddRequestData("vnp_TmnCode", "7CY9UEAF");
+            vnPay.AddRequestData("vnp_TxnRef", a.Id.ToString());
+            vnPay.AddRequestData("vnp_Version", "2.1.0");
+
+            string paymentUrl = vnPay.CreateRequestUrl(vnp_Url, "DIGHI9T61AVLTF4C28ZTV6BX4HKI027T");
+            return paymentUrl;
+        }
+
         public bool ValidateSignature(string queryString, string vnp_HashSecret)
         {
             var vnPay = new VnPayLibrary();

@@ -1,11 +1,13 @@
 ﻿using CCP.Repositori.Data;
 using CCP.Repositori.Entities;
 using CCP.Repositori.Repository;
+using CCP.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,12 +18,14 @@ namespace CCP.Services
         private readonly UserManager<AppUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
         private readonly Random _random = new Random();
+        private readonly IMeasurementInputService measurementInputService;
 
-        public ExpertService1(UserManager<AppUser> userManager, IUnitOfWork unitOfWork)
+        public ExpertService1(UserManager<AppUser> userManager, IUnitOfWork unitOfWork, IMeasurementInputService measurementInputService)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             SeedInitialAvailabilityData();
+            this.measurementInputService = measurementInputService;
         }
         public async Task<Expert> GetExpertByUserId(string userId)
         {
@@ -76,6 +80,20 @@ namespace CCP.Services
             return childs;
 
                 }
+        public async Task<List<Measurement>> GetChildMeasurements(Guid childId)
+        {
+            var list = _unitOfWork.Repository<Measurement>().GetAll().Where(m => m.ChildId == childId);
+
+            return list.ToList();
+        }
+
+        public async Task<Measurement> AddMeasurement(Measurement measurement)
+        {
+            await measurementInputService.SaveAsync(measurement.ChildId, new Service.DTOs.MeasurementInputDto { HeadCircumference = measurement.HeadCircumference,Height = measurement.Height,
+            Weight = measurement.Weight});
+            return measurement;
+        }
+
         private void SeedInitialAvailabilityData()
         {
             var availabilityRepo = _unitOfWork.Repository<ExpertAvailability>();
