@@ -24,14 +24,14 @@ namespace CCPProject.Pages
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
                 ErrorMessage = "Invalid input.";
-                return RedirectToPage("/Signin", new { error = ErrorMessage });
+                return Redirect("/signin");
             }
 
             var user = await _signInManager.UserManager.FindByEmailAsync(email);
             if (user == null)
             {
                 ErrorMessage = "Invalid email or password.";
-                return RedirectToPage("/Signin", new { error = ErrorMessage });
+                return Redirect("/signin");
             }
 
             // Check password manually
@@ -39,7 +39,7 @@ namespace CCPProject.Pages
             if (!passwordValid)
             {
                 ErrorMessage = "Invalid email or password.";
-                return RedirectToPage("/Signin", new { error = ErrorMessage });
+               return Redirect("/signin");
             }
 
             var claims = new List<Claim>

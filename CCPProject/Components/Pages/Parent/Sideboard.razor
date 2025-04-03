@@ -38,13 +38,6 @@
                             <span>Parent Profile</span>
                         </a>
                     </li>
-               
-                    <li class="@(ActiveTab == "Password" ? "active" : "")">
-                        <a @onclick='() => OnTabSelected.InvokeAsync("Password")'>
-                            <i class="fas fa-lock"></i>
-                            <span>Change Password</span>
-                        </a>
-                    </li>
                     <li>
                         <a @onclick="Logout">
                             <i class="fas fa-sign-out-alt"></i>

@@ -63,11 +63,6 @@
                             <ValidationMessage For="@(() => guestMeasurement.Weight)" />
                         </div>
 
-                        <div class="mb-3">
-                            <label for="headCircumference" class="form-label fw-semibold">Head Circumference (cm)</label>
-                            <InputNumber id="headCircumference" class="form-control rounded-3" @bind-Value="guestMeasurement.HeadCircumference" />
-                            <ValidationMessage For="@(() => guestMeasurement.HeadCircumference)" />
-                        </div>
 
                         <div class="mb-4">
                             <label for="dateOfBirth" class="form-label fw-semibold">Date of Birth</label>
@@ -103,10 +98,6 @@
                                     <tr class="highlight-row">
                                         <td class="fw-semibold text-muted">Weight</td>
                                         <td class="text-primary">@guestMeasurement.Weight kg</td>
-                                    </tr>
-                                    <tr class="highlight-row">
-                                        <td class="fw-semibold text-muted">Head Circumference</td>
-                                        <td class="text-primary">@guestMeasurement.HeadCircumference cm</td>
                                     </tr>
                                     <tr class="highlight-row">
                                         <td class="fw-semibold text-muted">Date of Birth</td>

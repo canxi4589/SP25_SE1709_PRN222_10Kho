@@ -99,10 +99,7 @@
                                 <a class="nav-link @(activeTab == "Overview" ? "active" : "")" @onclick='() => SetActiveTab("Overview")'>Overview</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link @(activeTab == "Locations" ? "active" : "")" @onclick='() => SetActiveTab("Locations")'>Locations</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link @(activeTab == "Reviews" ? "active" : "")" @onclick='() => SetActiveTab("Reviews")'>Reviews</a>
+                                <a class="nav-link @(activeTab == "Locations" ? "active" : "")" @onclick='() => SetActiveTab("Locations")'>Certificate</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link @(activeTab == "BusinessHours" ? "active" : "")" @onclick='() => SetActiveTab("BusinessHours")'>Business Hours</a>
@@ -132,7 +129,8 @@
                                         <div class="col-md-6">
                                             <div class="clinic-content">
                                                 <h4 class="clinic-name"><a href="#">@location.ClinicName</a></h4>
-                                                <p class="doc-speciality">@doctor.Qualifications</p>
+                                                <img src="@doctor.Qualifications" class="img-fluid" alt="User Image">
+
                                                 <div class="rating">
                                                     @for (int i = 0; i < 5; i++)
                                                     {
@@ -158,22 +156,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-4">
-                                            <div class="clinic-timing">
-                                                @foreach (var timing in location.Timings)
-                                                {
-                                                    <div>
-                                                        <p class="timings-days"><span>@timing.Days</span></p>
-                                                        <p class="timings-times">
-                                                            @foreach (var time in timing.Times)
-                                                            {
-                                                                <span>@time</span>
-                                                            }
-                                                        </p>
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
                                         <div class="col-md-2">
                                             <div class="consult-price">$@location.Price</div>
                                         </div>
@@ -183,32 +165,42 @@
                         }
                         @if (activeTab == "BusinessHours")
                         {
-                            <div class="row">
-                                <div class="col-md-6 offset-md-3">
-                                    <div class="widget business-widget">
-                                        <div class="widget-content">
-                                            <div class="listing-hours">
-                                                @foreach (var hour in doctor.BusinessHours)
+                            <div class="col-md-4">
+                                <div class="widget business-widget">
+                                    <div class="widget-content">
+                                        <div class="listing-hours">
+                                            @foreach (var location in doctor.Locations)
+                                            {
+                                                @foreach (var timing in location.Timings)
                                                 {
-                                                    <div class="listing-day @(hour.IsToday ? "current" : "") @(hour.IsClosed ? "closed" : "")">
-                                                        <div class="day">@hour.Day @if (hour.IsToday)
+                                                    bool isToday = timing.Days == DateTime.Now.DayOfWeek.ToString();
+                                                    bool isClosed = !timing.Times.Any() || timing.Times.Any(t => t.ToLower().Contains("closed"));
+
+                                                    <div class="listing-day @(isToday ? "current" : "") @(isClosed ? "closed" : "")">
+                                                        <div class="day">
+                                                            @timing.Days
+                                                            @if (isToday)
                                                             {
                                                                 <span>@DateTime.Now.ToString("d MMM yyyy")</span>
-                                                            }</div>
+                                                            }
+                                                        </div>
                                                         <div class="time-items">
-                                                            @if (hour.IsClosed)
+                                                            @if (isClosed)
                                                             {
                                                                 <span class="time"><span class="badge bg-danger-light">Closed</span></span>
                                                             }
                                                             else
                                                             {
                                                                 <span class="open-status"><span class="badge bg-success-light">Open Now</span></span>
-                                                                <span class="time">@hour.Time</span>
+                                                                @foreach (var time in timing.Times)
+                                                                {
+                                                                    <span class="time">@time</span>
+                                                                }
                                                             }
                                                         </div>
                                                     </div>
                                                 }
-                                            </div>
+                                            }
                                         </div>
                                     </div>
                                 </div>
@@ -255,10 +247,10 @@
                     ContactInfo = dbExpert.ContactInfo ?? "Not provided",
                     Certificate = dbExpert.Certificate,
                     Avatar = "https://people.com/thmb/8QOJNDgpfbWvi-LbzGF3knEjXTU=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc():focal(999x0:1001x2)/freddie-highmore-the-good-doctor-052024-2-2326544596844dc2869c5ec4a2f2f684.jpg", // Default; add to Expert if stored
-                    Qualifications = dbExpert.Certificate ?? "BDS, MDS - Oral & Maxillofacial Surgery", 
-                    Rating = new Random().Next(3, 5), 
-                    FeedbackCount = new Random().Next(10, 50), 
-                    Location = "Newyork, USA", 
+                    Qualifications = dbExpert.Certificate ?? "BDS, MDS - Oral & Maxillofacial Surgery",
+                    Rating = new Random().Next(3, 5),
+                    FeedbackCount = new Random().Next(10, 50),
+                    Location = "Newyork, USA",
                     ClinicPhotos = new List<string>
                 {
                     "assets/img/features/feature-01.jpg",
@@ -266,7 +258,7 @@
                     "assets/img/features/feature-03.jpg",
                     "assets/img/features/feature-04.jpg"
                 },
-                    Services = new List<string> { "Consult", "Provide helpful advices" }, 
+                    Services = new List<string> { "Consult", "Provide helpful advices" },
                     ApprovalRating = new Random().Next(90, 100),
                     AboutMe = "I am a surgeon! I am a surgeon! I. Am. A. Surgeon DR.HAN!!",
                     Locations = new List<Location>

@@ -1,23 +1,16 @@
 using CCP.Repositori.Repository;
 using CCP.Service;
-using CCP.Repositori.Repository;
 using CCP.Service.AppointmentService;
+using CCP.Service.BackgroundServices;
 using CCP.Service.EmailService;
-<<<<<<<<< Temporary merge branch 1
 using CCP.Service.ExpertService;
-=========
-using CCP.Service.ExpertService;
-=========
-using CCP.Service.ExpertService;
-=========
+using CCP.Service.Integration.BlobStorage;
+using CCP.Service.Vnpay;
 using CCP.Services;
-using CCP.Service.ExpertService;
 using CCPProject.Components;
 using CCPProject.Extension;
 using HCP.Repository.DatabaseExtension;
 using MudBlazor.Services;
-using CCP.Service.Integration.BlobStorage;
-using CCP.Service.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -28,13 +21,12 @@ builder.Services.AddHttpClient();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<IExpertService1,ExpertService1>();
-
-builder.Services.AddScoped<IExpertService1,ExpertService1>();
-
-builder.Services.AddScoped<IExpertService1,ExpertService1>();
-
-builder.Services.AddScoped<IParentProfileService, ParentProfileService>(); 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
+builder.Services.AddScoped<IMeasurementService, MeasurementService>();
+builder.Services.AddScoped<IExpertService1, ExpertService1>();
+builder.Services.AddScoped<IParentProfileService, ParentProfileService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IMeasurementInputService, MeasurementInputService>();
 builder.Services.AddScoped<IMeasurementAnalysisService, MeasurementAnalysisService>();
@@ -49,7 +41,7 @@ builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
 builder.Services.AddHostedService<AppointmentStatusUpdateService>();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<Ivnpay,VnPay>();
+builder.Services.AddScoped<Ivnpay, VnPay>();
 
 builder.Services.AddMudServices();
 
