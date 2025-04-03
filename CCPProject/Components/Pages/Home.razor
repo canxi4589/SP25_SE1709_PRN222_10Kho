@@ -72,7 +72,7 @@
                         <div class="mb-4">
                             <label for="dateOfBirth" class="form-label fw-semibold">Date of Birth</label>
                             <InputDate id="dateOfBirth" class="form-control rounded-3" @bind-Value="guestMeasurement.DateOfBirth"
-                                       Min="@minDate.ToString("yyyy-MM-dd")" Max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                       Max="@DateTime.Today.ToString("yyyy-MM-dd")" />
                             <ValidationMessage For="@(() => guestMeasurement.DateOfBirth)" />
                         </div>
 
