@@ -1,0 +1,202 @@
+﻿@page "/booking/{UserId}"
+@using CCP.Repositori.Entities
+@using CCP.Services
+@using CCPProject.Components.Layout
+@using CCPProject.Extension
+@using Microsoft.AspNetCore.Identity
+@layout Layout1
+@inject UserManager<AppUser> UserManager
+@inject IExpertService1 ExpertService
+@inject NavigationManager NavigationManager
+
+<div class="content">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                @if (expert != null)
+                {
+                    <!-- Expert Info Card -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="booking-doc-info">
+                                <a href="doctor-profile.html" class="booking-doc-img">
+                                    <img src="assets/img/doctors/doctor-thumb-02.jpg" alt="Expert Image">
+                                </a>
+                                <div class="booking-info">
+                                    <h4><a href="doctor-profile.html">@expert.Name</a></h4>
+                                    <p class="text-muted mb-0"><i class="fas fa-map-marker-alt"></i> VietNam</p>
+                                    <p class="text-muted">Price: $@expert.Price per session</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Widget -->
+                    <div class="card booking-schedule schedule-widget">
+                        <!-- Schedule Header -->
+                        <div class="schedule-header">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="day-slot">
+                                        <ul>
+                                            <li class="left-arrow">
+                                                <a @onclick:preventDefault @onclick="PreviousWeek"><i class="fa fa-chevron-left"></i></a>
+                                            </li>
+                                            @foreach (var day in GetWeekDays())
+                                            {
+                                                <li class="@(selectedDate.Date == day.Date ? "active" : "")">
+                                                    <span>@day.ToString("ddd")</span>
+                                                    <span class="slot-date" @onclick="() => SelectDate(day)">
+                                                        @day.ToString("dd MMM") <small class="slot-year">@day.Year</small>
+                                                    </span>
+                                                </li>
+                                            }
+                                            <li class="right-arrow">
+                                                <a @onclick:preventDefault @onclick="NextWeek"><i class="fa fa-chevron-right"></i></a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Content -->
+                        <div class="schedule-cont">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="time-slot">
+                                        <ul class="clearfix">
+                                            @if (availableSlots != null && availableSlots.Any())
+                                            {
+                                                @foreach (var slot in availableSlots)
+                                                {
+                                                    <li>
+                                                        <a class="timing @(selectedSlot == slot ? "selected" : "")"
+                                                        @onclick:preventDefault
+                                                           @onclick="() => SelectSlot(slot)">
+                                                            <span>@slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm")</span>
+                                                        </a>
+                                                    </li>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <li>No available slots</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Section -->
+                    @if (selectedSlot != null)
+                    {
+                        <div class="submit-section proceed-btn text-right">
+                            <button class="btn btn-primary submit-btn"
+                                    @onclick="BookAppointment">
+                                Book for $@expert.Price
+                            </button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>Loading expert information...</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string UserId { get; set; }
+
+    private Expert expert;
+    private List<ExpertAvailability> availabilities;
+    private DateTime selectedDate = DateTime.Today;
+    private ExpertAvailability selectedSlot; // Changed to ExpertAvailability to hold StartTime and EndTime
+    private List<ExpertAvailability> availableSlots = new List<ExpertAvailability>(); // Changed to store full slots
+    private DateTime currentWeekStart = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
+
+    protected override async Task OnInitializedAsync()
+    {
+        expert = await ExpertService.GetExpertByUserId(UserId);
+        if (expert != null)
+        {
+            availabilities = await ExpertService.GetExpertAvailabilities(expert.Id.ToString());
+            UpdateAvailableSlots();
+            StateHasChanged();
+        }
+    }
+
+    private IEnumerable<DateTime> GetWeekDays()
+    {
+        for (int i = 0; i < 7; i++)
+        {
+            yield return currentWeekStart.AddDays(i);
+        }
+    }
+
+    private void UpdateAvailableSlots()
+    {
+        availableSlots.Clear();
+        if (availabilities == null || !availabilities.Any())
+        {
+            return; // No availability data, leave slots empty
+        }
+
+        // Find all availability slots for the selected day of the week
+        var dayAvailabilities = availabilities
+            .Where(a => a.DayOfWeek.Equals(selectedDate.DayOfWeek.ToString(), StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        foreach (var dayAvailability in dayAvailabilities)
+        {
+            // Validate the slot
+            if (dayAvailability.StartTime >= TimeSpan.Zero &&
+                dayAvailability.EndTime <= TimeSpan.FromDays(1) &&
+                dayAvailability.StartTime < dayAvailability.EndTime)
+            {
+                availableSlots.Add(dayAvailability);
+            }
+        }
+    }
+
+    private void SelectDate(DateTime date)
+    {
+        selectedDate = date;
+        selectedSlot = null; // Reset selected slot
+        UpdateAvailableSlots();
+        StateHasChanged();
+    }
+
+    private void SelectSlot(ExpertAvailability slot)
+    {
+        selectedSlot = slot;
+    }
+
+    private void PreviousWeek()
+    {
+        currentWeekStart = currentWeekStart.AddDays(-7);
+        SelectDate(currentWeekStart);
+    }
+
+    private void NextWeek()
+    {
+        currentWeekStart = currentWeekStart.AddDays(7);
+        SelectDate(currentWeekStart);
+    }
+
+    private void BookAppointment()
+    {
+        if (selectedSlot != null)
+        {
+            var appointmentStart = (selectedDate + selectedSlot.StartTime).ToString("yyyy-MM-ddTHH:mm:ss");
+            var appointmentEnd = (selectedDate + selectedSlot.EndTime).ToString("yyyy-MM-ddTHH:mm:ss");
+            // Pass both start and end times to checkout, adjust URL as needed
+            NavigationManager.NavigateTo($"/checkout/{UserId}/{Uri.EscapeDataString(appointmentStart)}");
+        }
+    }
+}

@@ -1,0 +1,615 @@
+﻿@page "/checkout/{UserId}/{BookingDateTime}"
+@using CCP.Repositori.Entities
+@using CCP.Services
+@using CCPProject.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using System.Text.Json
+@layout Layout1
+@inject UserManager<AppUser> UserManager
+@inject IExpertService1 ExpertService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="content">
+    <div class="container">
+        @if (isLoading)
+        {
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+        else if (errorMessage != null)
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-md-7 col-lg-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <EditForm Model="@appointmentModel" OnValidSubmit="HandleCheckout">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+
+                                <!-- Child Selection -->
+                                <div class="info-widget">
+                                    <h4 class="card-title">Select Child</h4>
+                                    <div class="form-group">
+                                        <label for="childSelect">Select Child</label>
+                                        <div class="input-group">
+                                            <InputSelect id="childSelect" class="form-control"
+                                                         @bind-Value="appointmentModel.SelectedChildId"
+                                                         @bind-Value:after="OnChildSelected">
+                                                <option value="">Select a child</option>
+                                                @if (children != null && children.Any())
+                                                {
+                                                    @foreach (var child in children)
+                                                    {
+                                                        <option value="@child.Id.ToString()">@child.Name (DOB: @child.DateOfBirth.ToString("dd MMM yyyy"))</option>
+                                                    }
+                                                }
+                                            </InputSelect>
+                                            <button type="button" class="btn btn-outline-primary" @onclick="ShowAddChildModal">
+                                                Add New Child
+                                            </button>
+                                        </div>
+                                        @if (!children.Any())
+                                        {
+                                            <small class="form-text text-muted">No children found. Please add a child to proceed.</small>
+                                        }
+                                        <ValidationMessage For="@(() => appointmentModel.SelectedChildId)" />
+                                    </div>
+                                </div>
+
+                                <!-- Specialty-Specific Information -->
+                                @if (!string.IsNullOrEmpty(appointmentModel.SelectedChildId) && expert?.Specialty != null)
+                                {
+                                    <div class="info-widget">
+                                        <h4 class="card-title">Additional Information (@expert.Specialty.Name)</h4>
+                                        @switch (expert.Specialty.Name?.ToLower())
+                                        {
+                                            case "pediatrics":
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label>Recent Symptoms</label>
+                                                            <InputTextArea class="form-control" @bind-Value="appointmentModel.AdditionalInfo.Symptoms" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label>Current Medications</label>
+                                                            <InputTextArea class="form-control" @bind-Value="appointmentModel.AdditionalInfo.Medications" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                break;
+                                            case "child nutrition":
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label>Dietary Preferences</label>
+                                                            <InputTextArea class="form-control" @bind-Value="appointmentModel.AdditionalInfo.DietaryPreferences" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label>Food Allergies</label>
+                                                            <InputTextArea class="form-control" @bind-Value="appointmentModel.AdditionalInfo.FoodAllergies" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Physical Activity Records</label>
+                                                    <div class="input-group">
+                                                        <InputSelect class="form-control" @bind-Value="appointmentModel.AdditionalInfo.SelectedPhysicalActivityId">
+                                                            <option value="">Select an activity record (optional)</option>
+                                                            @if (physicalActivities != null && physicalActivities.Any())
+                                                            {
+                                                                @foreach (var activity in physicalActivities)
+                                                                {
+                                                                    <option value="@activity.Id.ToString()">
+                                                                        @activity.ActivityType - @activity.Duration min
+                                                                        (@activity.RecordDate.ToString("dd MMM yyyy"))
+                                                                        @if (activity.Intensity != null)
+                                                                        {
+                                                                            <span>(@activity.Intensity)</span>
+                                                                        }
+                                                                    </option>
+                                                                }
+                                                            }
+                                                        </InputSelect>
+                                                        <button type="button" class="btn btn-outline-primary" @onclick="ShowAddPhysicalActivityModal">
+                                                            Add New Activity
+                                                        </button>
+                                                    </div>
+                                                    @if (!physicalActivities.Any())
+                                                    {
+                                                        <small class="form-text text-muted">No physical activity records found. Add one if needed.</small>
+                                                    }
+                                                </div>
+                                                break;
+                                            default:
+                                                <div class="form-group">
+                                                    <label>Additional Notes</label>
+                                                    <InputTextArea class="form-control" @bind-Value="appointmentModel.AdditionalInfo.Notes" />
+                                                </div>
+                                                break;
+                                        }
+                                    </div>
+                                }
+
+                                <!-- Personal Information -->
+                                <div class="info-widget">
+                                    <h4 class="card-title">Personal Information</h4>
+                                    <div class="row">
+                                        <div class="col-md-6 col-sm-12">
+                                            <div class="form-group card-label">
+                                                <label>First Name</label>
+                                                <InputText class="form-control" @bind-Value="appointmentModel.FirstName" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-12">
+                                            <div class="form-group card-label">
+                                                <label>Last Name</label>
+                                                <InputText class="form-control" @bind-Value="appointmentModel.LastName" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-12">
+                                            <div class="form-group card-label">
+                                                <label>Email</label>
+                                                <InputText class="form-control" @bind-Value="appointmentModel.Email" type="email" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-12">
+                                            <div class="form-group card-label">
+                                                <label>Phone</label>
+                                                <InputText class="form-control" @bind-Value="appointmentModel.Phone" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Method -->
+                                <div class="payment-widget">
+                                    <h4 class="card-title">Payment Method</h4>
+                                    <div class="payment-list">
+                                        <InputRadioGroup @bind-Value="appointmentModel.PaymentMethod">
+                                            <div class="payment-radio">
+                                                <label>
+                                                    <InputRadio Value="@("Vnpay")" /> Vnpay
+                                                </label>
+                                            </div>
+                                        </InputRadioGroup>
+                                    </div>
+
+                                    <div class="terms-accept">
+                                        <div class="custom-checkbox">
+                                            <InputCheckbox @bind-Value="appointmentModel.TermsAccepted" id="terms_accept" />
+                                            <label for="terms_accept">I have read and accept <a href="#">Terms & Conditions</a></label>
+                                        </div>
+                                    </div>
+
+                                    <div class="submit-section mt-4">
+                                        <button type="submit" class="btn btn-primary submit-btn" disabled="@(!appointmentModel.TermsAccepted || string.IsNullOrEmpty(appointmentModel.SelectedChildId) || isSubmitting)">
+                                            @if (isSubmitting)
+                                            {
+                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                <span> Processing...</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Confirm and Pay $@expert?.Price</span>
+                                            }
+                                        </button>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-5 col-lg-4 theiaStickySidebar">
+                    @if (expert != null)
+                    {
+                        <div class="card booking-card">
+                            <div class="card-header">
+                                <h4 class="card-title">Booking Summary</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="booking-doc-info">
+                                    <a href="doctor-profile.html" class="booking-doc-img">
+                                        <img src="assets/img/doctors/doctor-thumb-02.jpg" alt="Expert Image">
+                                    </a>
+                                    <div class="booking-info">
+                                        <h4><a href="doctor-profile.html">@expert.Name</a></h4>
+                                        <p class="text-muted">@expert.Specialty?.Name</p>
+                                    </div>
+                                </div>
+
+                                <div class="booking-summary">
+                                    <div class="booking-item-wrap">
+                                        <ul class="booking-date">
+                                            <li>Date <span>@bookingDateTime.ToString("dd MMM yyyy")</span></li>
+                                            <li>Time <span>@bookingDateTime.ToString("hh:mm tt")</span></li>
+                                        </ul>
+                                        <ul class="booking-fee">
+                                            <li>Consulting Fee <span>$@expert.Price</span></li>
+                                        </ul>
+                                        <div class="booking-total">
+                                            <ul class="booking-total-list">
+                                                <li>
+                                                    <span>Total</span>
+                                                    <span class="total-cost">$@expert.Price</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add Child Modal -->
+@if (showAddChildModal)
+{
+    <div class="modal fade show" style="display:block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <EditForm Model="@newChild" OnValidSubmit="HandleAddChild">
+                    <DataAnnotationsValidator />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Child</h5>
+                        <button type="button" class="btn-close" @onclick="HideAddChildModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <InputText class="form-control" @bind-Value="newChild.Name" />
+                            <ValidationMessage For="@(() => newChild.Name)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <InputDate class="form-control" @bind-Value="newChild.DateOfBirth" />
+                            <ValidationMessage For="@(() => newChild.DateOfBirth)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <InputSelect class="form-control" @bind-Value="newChild.Gender">
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => newChild.Gender)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Birth Weight (kg) - Optional</label>
+                            <InputNumber class="form-control" @bind-Value="newChild.BirthWeight" />
+                            <ValidationMessage For="@(() => newChild.BirthWeight)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Gestational Age (weeks) - Optional</label>
+                            <InputNumber class="form-control" @bind-Value="newChild.GestationalAge" />
+                            <ValidationMessage For="@(() => newChild.GestationalAge)" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="HideAddChildModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            }
+                            <span>Save Child</span>
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show" @onclick="HideAddChildModal"></div>
+}
+
+<!-- Add Physical Activity Modal -->
+@if (showAddPhysicalActivityModal)
+{
+    <div class="modal fade show" style="display:block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <EditForm Model="@newPhysicalActivity" OnValidSubmit="HandleAddPhysicalActivity">
+                    <DataAnnotationsValidator />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Physical Activity</h5>
+                        <button type="button" class="btn-close" @onclick="HideAddPhysicalActivityModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Activity Type</label>
+                            <InputText class="form-control" @bind-Value="newPhysicalActivity.ActivityType" />
+                            <ValidationMessage For="@(() => newPhysicalActivity.ActivityType)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Record Date</label>
+                            <InputDate class="form-control" @bind-Value="newPhysicalActivity.RecordDate" />
+                            <ValidationMessage For="@(() => newPhysicalActivity.RecordDate)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Duration (minutes)</label>
+                            <InputNumber class="form-control" @bind-Value="newPhysicalActivity.Duration" />
+                            <ValidationMessage For="@(() => newPhysicalActivity.Duration)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Intensity (optional)</label>
+                            <InputSelect class="form-control" @bind-Value="newPhysicalActivity.Intensity">
+                                <option value="">Select Intensity</option>
+                                <option value="Low">Low</option>
+                                <option value="Moderate">Moderate</option>
+                                <option value="High">High</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => newPhysicalActivity.Intensity)" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="HideAddPhysicalActivityModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            }
+                            <span>Save Activity</span>
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show" @onclick="HideAddPhysicalActivityModal"></div>
+}
+
+@code {
+    [Parameter] public string UserId { get; set; }
+    [Parameter] public string BookingDateTime { get; set; }
+    private AppUser temp;
+    private Expert expert;
+    private DateTime bookingDateTime;
+    private List<Child> children = new();
+    private AppointmentCheckoutModel appointmentModel = new();
+    private Child newChild = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool showAddChildModal = false;
+    private string errorMessage;
+    private List<PhysicalActivity> physicalActivities = new();
+    private PhysicalActivity newPhysicalActivity = new();
+    private bool showAddPhysicalActivityModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            expert = await ExpertService.GetExpertByUserId(UserId);
+            if (expert == null)
+            {
+                errorMessage = "Expert not found";
+                return;
+            }
+
+            bookingDateTime = DateTime.Parse(BookingDateTime);
+            var currentUser = await UserManager.GetUserAsync(user);
+            if (currentUser == null)
+            {
+                errorMessage = "Please log in to continue";
+                return;
+            }
+
+            temp = currentUser;
+            children = await ExpertService.GetUserChildren(currentUser.Id);
+
+            appointmentModel.FirstName = currentUser.FullName?.Split(' ')[0] ?? "";
+            appointmentModel.LastName = currentUser.FullName?.Split(' ').Length > 1 ? currentUser.FullName.Split(' ')[1] : "";
+            appointmentModel.Email = currentUser.Email ?? "";
+            appointmentModel.Phone = currentUser.PhoneNumber ?? "0366532672";
+
+            // If a child is pre-selected, load their physical activities
+            if (!string.IsNullOrEmpty(appointmentModel.SelectedChildId) && expert?.Specialty?.Name?.ToLower() == "child nutrition")
+            {
+                physicalActivities = await ExpertService.GetChildPhysicalActivities(Guid.Parse(appointmentModel.SelectedChildId));
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred while loading the page: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ShowAddChildModal()
+    {
+        newChild = new Child
+            {
+                UserId = temp.Id,
+                DateOfBirth = DateTime.Today.AddYears(-1) // Default to 1 year ago
+            };
+        showAddChildModal = true;
+    }
+
+    private void HideAddChildModal()
+    {
+        showAddChildModal = false;
+        newChild = new Child();
+    }
+
+    private async Task HandleAddChild()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            var addedChild = await ExpertService.AddChild(newChild);
+            children.Add(addedChild);
+            appointmentModel.SelectedChildId = addedChild.Id.ToString();
+
+            // Load physical activities if it's a child nutrition expert
+            if (expert?.Specialty?.Name?.ToLower() == "child nutrition")
+            {
+                physicalActivities = await ExpertService.GetChildPhysicalActivities(addedChild.Id);
+            }
+
+            HideAddChildModal();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to add child: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task OnChildSelected()
+    {
+        if (!string.IsNullOrEmpty(appointmentModel.SelectedChildId) && expert?.Specialty?.Name?.ToLower() == "child nutrition")
+        {
+            try
+            {
+                physicalActivities = await ExpertService.GetChildPhysicalActivities(Guid.Parse(appointmentModel.SelectedChildId));
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to load physical activities: {ex.Message}";
+            }
+        }
+        else
+        {
+            physicalActivities = new List<PhysicalActivity>();
+        }
+        StateHasChanged();
+    }
+
+    private void ShowAddPhysicalActivityModal()
+    {
+        if (string.IsNullOrEmpty(appointmentModel.SelectedChildId))
+        {
+            errorMessage = "Please select a child first";
+            return;
+        }
+
+        newPhysicalActivity = new PhysicalActivity
+            {
+                ChildId = Guid.Parse(appointmentModel.SelectedChildId),
+                RecordDate = DateTime.Today
+            };
+        showAddPhysicalActivityModal = true;
+    }
+
+    private void HideAddPhysicalActivityModal()
+    {
+        showAddPhysicalActivityModal = false;
+        newPhysicalActivity = new PhysicalActivity();
+    }
+
+    private async Task HandleAddPhysicalActivity()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            var addedActivity = await ExpertService.AddPhysicalActivity(newPhysicalActivity);
+            physicalActivities.Add(addedActivity);
+            appointmentModel.AdditionalInfo.SelectedPhysicalActivityId = addedActivity.Id.ToString();
+
+            HideAddPhysicalActivityModal();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to add physical activity: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task HandleCheckout()
+    {
+        if (!appointmentModel.TermsAccepted || string.IsNullOrEmpty(appointmentModel.SelectedChildId)) return;
+
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            var appointment = new Appointment
+                {
+                    ParentId = temp.Id,
+                    ChildId = Guid.Parse(appointmentModel.SelectedChildId),
+                    ExpertId = expert.Id,
+                    StartTime = TimeSpan.FromTicks(bookingDateTime.Ticks - bookingDateTime.Date.Ticks),
+                    EndTime = TimeSpan.FromTicks(bookingDateTime.Ticks - bookingDateTime.Date.Ticks).Add(TimeSpan.FromHours(1)),
+                    PhysicalActivityId = Guid.Parse(appointmentModel.AdditionalInfo.SelectedPhysicalActivityId),
+                    BookingDate = bookingDateTime.Date,
+                    Price = expert.Price,
+                    Status = "Paid",
+                    Type = expert.Specialty?.Name,
+                };
+
+            await ExpertService.BookAppointment(appointment);
+            NavigationManager.NavigateTo("/booking-success");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to book appointment: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    public class AppointmentCheckoutModel
+    {
+        public string SelectedChildId { get; set; } = "";
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string PaymentMethod { get; set; } = "CreditCard";
+        public string CardName { get; set; } = "";
+        public string CardNumber { get; set; } = "";
+        public string ExpiryMonth { get; set; } = "";
+        public string ExpiryYear { get; set; } = "";
+        public string CVV { get; set; } = "";
+        public bool TermsAccepted { get; set; } = false;
+        public AdditionalInfoModel AdditionalInfo { get; set; } = new();
+    }
+
+    public class AdditionalInfoModel
+    {
+        public string Symptoms { get; set; } = "";
+        public string Medications { get; set; } = "";
+        public string DietaryPreferences { get; set; } = "";
+        public string FoodAllergies { get; set; } = "";
+        public string Notes { get; set; } = "";
+        public string SelectedPhysicalActivityId { get; set; } = "";
+    }
+}

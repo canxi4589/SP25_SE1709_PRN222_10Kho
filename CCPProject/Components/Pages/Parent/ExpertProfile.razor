@@ -17,7 +17,6 @@
         }
         else
         {
-            <!-- Doctor Widget -->
             <div class="card">
                 <div class="card-body">
                     <div class="doctor-widget">
@@ -27,7 +26,6 @@
                             </div>
                             <div class="doc-info-cont">
                                 <h4 class="doc-name">Dr. @doctor.Name</h4>
-                                <p class="doc-speciality">@doctor.Qualifications</p>
                                 <p class="doc-department">
                                     <img src="@GetSpecialtyIcon(doctor.Specialty.Name)" class="img-fluid" alt="Speciality"> @doctor.Specialty.Name
                                 </p>
@@ -41,7 +39,7 @@
                                 <div class="clinic-details">
                                     <p class="doc-location">
                                         <i class="fas fa-map-marker-alt"></i> @doctor.Location - <a href="javascript:void(0);" @onclick="() => GetDirections()">Get Directions</a>
-                                        </p>
+                                    </p>
                                     <ul class="clinic-gallery">
                                         @foreach (var photo in doctor.ClinicPhotos)
                                         {
@@ -85,7 +83,7 @@
                                 </a>
                             </div>
                             <div class="clinic-booking">
-                                <a class="apt-btn" href="@($"/booking/{doctor.UserId}")">Book Appointment</a>
+                                <a class="apt-btn" href="@($"/booking/{UserId}")">Book Appointment</a>
                             </div>
                         </div>
                     </div>
@@ -256,11 +254,11 @@
                     Price = dbExpert.Price,
                     ContactInfo = dbExpert.ContactInfo ?? "Not provided",
                     Certificate = dbExpert.Certificate,
-                    Avatar = "assets/img/doctors/doctor-thumb-02.jpg", // Default; add to Expert if stored
-                    Qualifications = dbExpert.Certificate ?? "BDS, MDS - Oral & Maxillofacial Surgery", // Use Certificate as placeholder
-                    Rating = new Random().Next(3, 5), // Add to Expert if stored
-                    FeedbackCount = new Random().Next(10, 50), // Add to Expert if stored
-                    Location = "Newyork, USA", // Add to Expert if stored
+                    Avatar = "https://people.com/thmb/8QOJNDgpfbWvi-LbzGF3knEjXTU=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc():focal(999x0:1001x2)/freddie-highmore-the-good-doctor-052024-2-2326544596844dc2869c5ec4a2f2f684.jpg", // Default; add to Expert if stored
+                    Qualifications = dbExpert.Certificate ?? "BDS, MDS - Oral & Maxillofacial Surgery", 
+                    Rating = new Random().Next(3, 5), 
+                    FeedbackCount = new Random().Next(10, 50), 
+                    Location = "Newyork, USA", 
                     ClinicPhotos = new List<string>
                 {
                     "assets/img/features/feature-01.jpg",
@@ -268,9 +266,9 @@
                     "assets/img/features/feature-03.jpg",
                     "assets/img/features/feature-04.jpg"
                 },
-                    Services = new List<string> { "Dental Fillings", "Teeth Whitening" }, // Add to Expert if stored
-                    ApprovalRating = new Random().Next(90, 100), // Add to Expert if stored
-                    AboutMe = "Lorem ipsum dolor sit amet, consectetur adipiscing elit...", // Add to Expert if stored
+                    Services = new List<string> { "Consult", "Provide helpful advices" }, 
+                    ApprovalRating = new Random().Next(90, 100),
+                    AboutMe = "I am a surgeon! I am a surgeon! I. Am. A. Surgeon DR.HAN!!",
                     Locations = new List<Location>
                 {
                     new Location
@@ -344,7 +342,7 @@
         public List<string> ClinicPhotos { get; set; }
         public int ApprovalRating { get; set; }
         public List<string> Services { get; set; }
-        public string AboutMe { get; set; }
+        public string AboutMe { get; set; } = "I am a SURGEON";
         public List<Location> Locations { get; set; }
         public List<BusinessHour> BusinessHours { get; set; }
         // Add other properties (Education, Experience, Awards, Reviews) as needed
