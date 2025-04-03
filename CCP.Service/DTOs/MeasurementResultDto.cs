@@ -10,7 +10,11 @@ namespace CCP.Service.DTOs
     {
         public HeightRating HeightResult { get; set; }
         public WeightRating WeightResult { get; set; }
+        public string HeightResultConsul { get; set; }
+        public string WeightResultConsul { get; set; }
         public BmiRating BMIResult { get; set; }
         public HeadCircumferenceRating HeadCircumferenceResult { get; set; }
+        public string HeadCircumferenceResultConsul { get; set; }
+        public string BMIResultConsul { get; set; }
     }
 }

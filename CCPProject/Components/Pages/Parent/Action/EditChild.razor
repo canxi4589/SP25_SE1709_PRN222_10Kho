@@ -1,0 +1,109 @@
+﻿@page "/edit-child/{ChildId:guid}"
+@using CCP.Service
+@using CCP.Service.DTOs
+@using CCPProject.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IParentProfileService ParentProfileService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthProvider
+@layout Layout1
+
+<div class="main-wrapper">
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    @if (isLoading)
+                    {
+                        <div class="text-center my-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2">Loading child data...</p>
+                        </div>
+                    }
+                    else if (child == null)
+                    {
+                        <div class="alert alert-danger mt-4">Child not found.</div>
+                    }
+                    else
+                    {
+                        <div class="card shadow-sm mt-4">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>Edit Child Information</h4>
+                            </div>
+                            <div class="card-body">
+                                <EditForm Model="child" OnValidSubmit="HandleValidSubmit">
+                                    <DataAnnotationsValidator />
+                                    <ValidationSummary />
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Full Name</label>
+                                        <InputText class="form-control" @bind-Value="child.Name" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Gender</label>
+                                        <InputSelect class="form-select" @bind-Value="child.Gender">
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </InputSelect>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Date of Birth</label>
+                                        <InputDate class="form-control" @bind-Value="child.DateOfBirth" />
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <button type="submit" class="btn btn-success px-4">
+                                            <i class="fas fa-save me-1"></i> Update
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="BackToProfile">
+                                            <i class="fas fa-times me-1"></i> Cancel
+                                        </button>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public Guid ChildId { get; set; }
+    private ChildDto? child;
+    private Guid userId;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        var userIdStr = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        if (Guid.TryParse(userIdStr, out userId))
+        {
+            child = await ParentProfileService.GetChildByIdAsync(ChildId, userId);
+        }
+
+        isLoading = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (child != null)
+        {
+            await ParentProfileService.UpdateChildAsync(ChildId, userId, child);
+            NavigationManager.NavigateTo("/parent-profile", true);
+        }
+    }
+
+    private void BackToProfile()
+    {
+        NavigationManager.NavigateTo("/parent-profile", true);
+    }
+}

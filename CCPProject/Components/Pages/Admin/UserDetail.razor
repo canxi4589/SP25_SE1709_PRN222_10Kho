@@ -1,0 +1,135 @@
+﻿@page "/admin/user-details/{Id}"
+@using CCP.Service.DTOs
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using CCP.Repositori.Entities
+@using CCP.Service.ExpertService
+@attribute [Authorize(Roles = "Admin")]
+@inject UserManager<AppUser> UserManager
+@inject IExpertService ExpertService
+@inject NavigationManager NavigationManager
+@layout AdminDashboard
+
+
+<PageTitle>User Details</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">User Details</h3>
+                    <a href="/admin/user-management" class="btn btn-light btn-sm">
+                        <i class="bi bi-arrow-left"></i> Back to User Management
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading user details...</p>
+                        </div>
+                    }
+                    else if (user == null)
+                    {
+                        <div class="alert alert-danger text-center">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            User not found.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>User Information</h5>
+                                <p><strong>Full Name:</strong> @user.FullName</p>
+                                <p><strong>Email:</strong> @user.Email</p>
+                                <p><strong>Role:</strong> @role</p>
+                                <p><strong>Registration Date:</strong> @user.RegistrationDate.ToString("dd MMM yyyy")</p>
+                                <p><strong>Last Login:</strong> @(user.LastLogin?.ToString("dd MMM yyyy HH:mm") ?? "Never")</p>
+                                <p><strong>Date of Birth:</strong> @(user.DateOfBirth?.ToString("dd MMM yyyy") ?? "Not specified")</p>
+                                <p>
+                                    <strong>Status:</strong>
+                                    <span class="badge @(user.IsActive ? "bg-success" : "bg-danger")">
+                                        @(user.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                @if (role == "Parent" && user.Children != null && user.Children.Any())
+                                {
+                                    <h5>Children</h5>
+                                    <ul>
+                                        @foreach (var child in user.Children)
+                                        {
+                                            <li>@child.Name (Age: @child.GestationalAge)</li>
+                                        }
+                                    </ul>
+                                }
+                                else if (role == "Expert" && expert != null)
+                                {
+                                    <h5>Expert Details</h5>
+                                    <p><strong>Specialty:</strong> @expert.Specialty</p>
+                                    <p><strong>Contact Info:</strong> @(expert.ContactInfo ?? "Not specified")</p>
+                                    <p><strong>Price per Session:</strong> $@expert.Price</p>
+                                    <p><strong>Certificate:</strong> @(expert.CertificateUrl ?? "Not uploaded")</p>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private AppUser user;
+    private ExpertDTO expert;
+    private string role;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            user = await UserManager.FindByIdAsync(Id);
+            if (user != null)
+            {
+                var roles = await UserManager.GetRolesAsync(user);
+                role = roles.FirstOrDefault() ?? "None";
+
+                if (role == "Expert")
+                {
+                    expert = await ExpertService.GetExpertByUserIdAsync(user.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user details: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+</style>

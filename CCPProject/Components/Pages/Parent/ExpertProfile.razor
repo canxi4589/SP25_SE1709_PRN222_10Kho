@@ -1,0 +1,367 @@
+﻿@page "/doctor-profile/{UserId}"
+@using CCP.Repositori.Data
+@using CCPProject.Components.Layout
+@using Microsoft.AspNetCore.Identity
+@using CCP.Repositori.Entities
+@using Microsoft.EntityFrameworkCore
+@inject UserManager<AppUser> UserManager
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@layout Layout1
+<div class="content">
+    <div class="container">
+        @if (doctor == null)
+        {
+            <p>Loading doctor profile...</p>
+        }
+        else
+        {
+            <div class="card">
+                <div class="card-body">
+                    <div class="doctor-widget">
+                        <div class="doc-info-left">
+                            <div class="doctor-img">
+                                <img src="@doctor.Avatar" class="img-fluid" alt="User Image">
+                            </div>
+                            <div class="doc-info-cont">
+                                <h4 class="doc-name">Dr. @doctor.Name</h4>
+                                <p class="doc-department">
+                                    <img src="@GetSpecialtyIcon(doctor.Specialty.Name)" class="img-fluid" alt="Speciality"> @doctor.Specialty.Name
+                                </p>
+                                <div class="rating">
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        <i class="fas fa-star @(i < doctor.Rating ? "filled" : "")"></i>
+                                    }
+                                    <span class="d-inline-block average-rating">(@doctor.FeedbackCount)</span>
+                                </div>
+                                <div class="clinic-details">
+                                    <p class="doc-location">
+                                        <i class="fas fa-map-marker-alt"></i> @doctor.Location - <a href="javascript:void(0);" @onclick="() => GetDirections()">Get Directions</a>
+                                    </p>
+                                    <ul class="clinic-gallery">
+                                        @foreach (var photo in doctor.ClinicPhotos)
+                                        {
+                                            <li>
+                                                <a href="@photo" data-fancybox="gallery">
+                                                    <img src="@photo" alt="Feature">
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                                <div class="clinic-services">
+                                    @foreach (var service in doctor.Services)
+                                    {
+                                        <span>@service</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="doc-info-right">
+                            <div class="clini-infos">
+                                <ul>
+                                    <li><i class="far fa-thumbs-up"></i> @doctor.ApprovalRating%</li>
+                                    <li><i class="far fa-comment"></i> @doctor.FeedbackCount Feedback</li>
+                                    <li><i class="fas fa-map-marker-alt"></i> @doctor.Location</li>
+                                    <li><i class="far fa-money-bill-alt"></i> $@doctor.Price per hour</li>
+                                </ul>
+                            </div>
+                            <div class="doctor-action">
+                                <a href="javascript:void(0)" class="btn btn-white fav-btn" @onclick="ToggleFavourite">
+                                    <i class="far fa-bookmark"></i>
+                                </a>
+                                <a href="/chat" class="btn btn-white msg-btn">
+                                    <i class="far fa-comment-alt"></i>
+                                </a>
+                                <a href="javascript:void(0)" class="btn btn-white call-btn" @onclick="OpenVoiceCallModal">
+                                    <i class="fas fa-phone"></i>
+                                </a>
+                                <a href="javascript:void(0)" class="btn btn-white call-btn" @onclick="OpenVideoCallModal">
+                                    <i class="fas fa-video"></i>
+                                </a>
+                            </div>
+                            <div class="clinic-booking">
+                                <a class="apt-btn" href="@($"/booking/{UserId}")">Book Appointment</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doctor Details Tab -->
+            <div class="card">
+                <div class="card-body pt-0">
+                    <nav class="user-tabs mb-4">
+                        <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
+                            <li class="nav-item">
+                                <a class="nav-link @(activeTab == "Overview" ? "active" : "")" @onclick='() => SetActiveTab("Overview")'>Overview</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @(activeTab == "Locations" ? "active" : "")" @onclick='() => SetActiveTab("Locations")'>Certificate</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @(activeTab == "BusinessHours" ? "active" : "")" @onclick='() => SetActiveTab("BusinessHours")'>Business Hours</a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <div class="tab-content pt-0">
+                        @if (activeTab == "Overview")
+                        {
+                            <div class="row">
+                                <div class="col-md-12 col-lg-9">
+                                    <div class="widget about-widget">
+                                        <h4 class="widget-title">About Me</h4>
+                                        <p>@doctor.AboutMe</p>
+                                    </div>
+                                    <!-- Add Education, Experience, Awards, Services, Specializations as needed -->
+                                </div>
+                            </div>
+                        }
+                        @if (activeTab == "Locations")
+                        {
+                            @foreach (var location in doctor.Locations)
+                            {
+                                <div class="location-list">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="clinic-content">
+                                                <h4 class="clinic-name"><a href="#">@location.ClinicName</a></h4>
+                                                <img src="@doctor.Qualifications" class="img-fluid" alt="User Image">
+
+                                                <div class="rating">
+                                                    @for (int i = 0; i < 5; i++)
+                                                    {
+                                                        <i class="fas fa-star @(i < location.Rating ? "filled" : "")"></i>
+                                                    }
+                                                    <span class="d-inline-block average-rating">(@location.RatingCount)</span>
+                                                </div>
+                                                <div class="clinic-details mb-0">
+                                                    <h5 class="clinic-direction">
+                                                        <i class="fas fa-map-marker-alt"></i> @location.Address <br>
+                                                        <a href="javascript:void(0);" @onclick="() => GetDirections(location.Address)">Get Directions</a>
+                                                    </h5>
+                                                    <ul>
+                                                        @foreach (var photo in location.Photos)
+                                                        {
+                                                            <li>
+                                                                <a href="@photo" data-fancybox="gallery2">
+                                                                    <img src="@photo" alt="Feature Image">
+                                                                </a>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="consult-price">$@location.Price</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        @if (activeTab == "BusinessHours")
+                        {
+                            <div class="col-md-4">
+                                <div class="widget business-widget">
+                                    <div class="widget-content">
+                                        <div class="listing-hours">
+                                            @foreach (var location in doctor.Locations)
+                                            {
+                                                @foreach (var timing in location.Timings)
+                                                {
+                                                    bool isToday = timing.Days == DateTime.Now.DayOfWeek.ToString();
+                                                    bool isClosed = !timing.Times.Any() || timing.Times.Any(t => t.ToLower().Contains("closed"));
+
+                                                    <div class="listing-day @(isToday ? "current" : "") @(isClosed ? "closed" : "")">
+                                                        <div class="day">
+                                                            @timing.Days
+                                                            @if (isToday)
+                                                            {
+                                                                <span>@DateTime.Now.ToString("d MMM yyyy")</span>
+                                                            }
+                                                        </div>
+                                                        <div class="time-items">
+                                                            @if (isClosed)
+                                                            {
+                                                                <span class="time"><span class="badge bg-danger-light">Closed</span></span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="open-status"><span class="badge bg-success-light">Open Now</span></span>
+                                                                @foreach (var time in timing.Times)
+                                                                {
+                                                                    <span class="time">@time</span>
+                                                                }
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (activeTab == "Reviews")
+                        {
+                            <!-- Add review section here when you have a Review entity -->
+                            <p>Reviews not implemented yet.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string UserId { get; set; }
+    private DoctorProfileModel doctor;
+    private string activeTab = "Overview";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDoctorProfile();
+    }
+
+    private async Task LoadDoctorProfile()
+    {
+        var dbExpert = await DbContext.Experts
+            .Include(e => e.User)
+            .Include(e => e.Specialty)
+            .Include(e => e.ExpertAvailabilities)
+            .FirstOrDefaultAsync(e => e.UserId == UserId);
+
+        if (dbExpert != null)
+        {
+            doctor = new DoctorProfileModel
+                {
+                    UserId = dbExpert.UserId,
+                    Name = dbExpert.Name,
+                    Specialty = dbExpert.Specialty,
+                    Price = dbExpert.Price,
+                    ContactInfo = dbExpert.ContactInfo ?? "Not provided",
+                    Certificate = dbExpert.Certificate,
+                    Avatar = "https://people.com/thmb/8QOJNDgpfbWvi-LbzGF3knEjXTU=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc():focal(999x0:1001x2)/freddie-highmore-the-good-doctor-052024-2-2326544596844dc2869c5ec4a2f2f684.jpg", // Default; add to Expert if stored
+                    Qualifications = dbExpert.Certificate ?? "BDS, MDS - Oral & Maxillofacial Surgery",
+                    Rating = new Random().Next(3, 5),
+                    FeedbackCount = new Random().Next(10, 50),
+                    Location = "Newyork, USA",
+                    ClinicPhotos = new List<string>
+                {
+                    "assets/img/features/feature-01.jpg",
+                    "assets/img/features/feature-02.jpg",
+                    "assets/img/features/feature-03.jpg",
+                    "assets/img/features/feature-04.jpg"
+                },
+                    Services = new List<string> { "Consult", "Provide helpful advices" },
+                    ApprovalRating = new Random().Next(90, 100),
+                    AboutMe = "I am a surgeon! I am a surgeon! I. Am. A. Surgeon DR.HAN!!",
+                    Locations = new List<Location>
+                {
+                    new Location
+                    {
+                        ClinicName = "Smile Cute Dental Care Center",
+                        Address = "2286 Sundown Lane, Austin, Texas 78749, USA",
+                        Rating = 4,
+                        RatingCount = 4,
+                        Photos = new List<string>
+                        {
+                            "assets/img/features/feature-01.jpg",
+                            "assets/img/features/feature-02.jpg",
+                            "assets/img/features/feature-03.jpg",
+                            "assets/img/features/feature-04.jpg"
+                        },
+                        Timings = new List<Timing>
+                        {
+                            new Timing { Days = "Mon - Sat", Times = new List<string> { "10:00 AM - 2:00 PM", "4:00 PM - 9:00 PM" } },
+                            new Timing { Days = "Sun", Times = new List<string> { "10:00 AM - 2:00 PM" } }
+                        },
+                        Price = 250
+                    }
+                },
+                    BusinessHours = dbExpert.ExpertAvailabilities?.Select(a => new BusinessHour
+                    {
+                        Day = a.DayOfWeek,
+                        Time = $"{a.StartTime} - {a.EndTime}",
+                        IsToday = a.DayOfWeek == DateTime.Now.DayOfWeek.ToString(),
+                        IsClosed = a.Status == "Closed" // Assuming Status can be "Closed"
+                    }).ToList() ?? new List<BusinessHour>
+                {
+                    new BusinessHour { Day = "Monday", Time = "07:00 AM - 09:00 PM" },
+                    new BusinessHour { Day = "Sunday", IsClosed = true }
+                }
+                };
+        }
+    }
+
+    private void SetActiveTab(string tab) => activeTab = tab;
+    private void ToggleFavourite() => Console.WriteLine("Favourite toggled");
+    private void OpenVoiceCallModal() => Console.WriteLine("Voice call modal opened");
+    private void OpenVideoCallModal() => Console.WriteLine("Video call modal opened");
+    private void GetDirections(string address = null) => Console.WriteLine($"Getting directions for: {address ?? doctor.Location}");
+
+    private string GetSpecialtyIcon(string specialty)
+    {
+        return specialty switch
+        {
+            "Urology" => "assets/img/specialities/specialities-01.png",
+            "Neurology" => "assets/img/specialities/specialities-02.png",
+            "Orthopedic" => "assets/img/specialities/specialities-03.png",
+            "Cardiology" => "assets/img/specialities/specialities-04.png",
+            "Dentist" => "assets/img/specialities/specialities-05.png",
+            _ => "assets/img/specialities/specialities-05.png"
+        };
+    }
+
+    public class DoctorProfileModel
+    {
+        public string UserId { get; set; }
+        public string Name { get; set; }
+        public Specialty Specialty { get; set; }
+        public decimal Price { get; set; }
+        public string ContactInfo { get; set; }
+        public string Certificate { get; set; }
+        public string Avatar { get; set; }
+        public string Qualifications { get; set; }
+        public int Rating { get; set; }
+        public int FeedbackCount { get; set; }
+        public string Location { get; set; }
+        public List<string> ClinicPhotos { get; set; }
+        public int ApprovalRating { get; set; }
+        public List<string> Services { get; set; }
+        public string AboutMe { get; set; } = "I am a SURGEON";
+        public List<Location> Locations { get; set; }
+        public List<BusinessHour> BusinessHours { get; set; }
+        // Add other properties (Education, Experience, Awards, Reviews) as needed
+    }
+
+    public class Location
+    {
+        public string ClinicName { get; set; }
+        public string Address { get; set; }
+        public int Rating { get; set; }
+        public int RatingCount { get; set; }
+        public List<string> Photos { get; set; }
+        public List<Timing> Timings { get; set; }
+        public decimal Price { get; set; }
+    }
+
+    public class Timing
+    {
+        public string Days { get; set; }
+        public List<string> Times { get; set; }
+    }
+
+    public class BusinessHour
+    {
+        public string Day { get; set; }
+        public string Time { get; set; }
+        public bool IsToday { get; set; }
+        public bool IsClosed { get; set; }
+    }
+}

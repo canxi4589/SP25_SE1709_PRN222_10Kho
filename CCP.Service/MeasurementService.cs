@@ -29,6 +29,39 @@ namespace CCP.Service
                 .OrderByDescending(m => m.RecordDate)
                 .ToListAsync();
         }
+        
+        public async Task<List<SleepPattern>> GetSleepPatternsByChildAsync(Guid childId)
+        {
+            return await _unitOfWork.Repository<SleepPattern>().GetAll()
+                .Where(m => m.ChildId == childId)
+                .OrderByDescending(m => m.RecordDate)
+                .ToListAsync();
+        }
+        
+        public async Task<List<PhysicalActivity>> GetPhysicalActivitiesByChildAsync(Guid childId)
+        {
+            return await _unitOfWork.Repository<PhysicalActivity>().GetAll()
+                .Where(m => m.ChildId == childId)
+                .OrderByDescending(m => m.RecordDate)
+                .ToListAsync();
+        }
+
+        public async Task<List<NutritionalIntake>> GetNutritionalIntakesByChildAsync(Guid childId)
+        {
+            return await _unitOfWork.Repository<NutritionalIntake>().GetAll()
+                .Where(ni => ni.ChildId == childId)
+                .Include(ni => ni.Child)
+                .Include(ni => ni.FoodItem)
+                .ToListAsync();
+        }
+
+        public async Task<List<HealthMetric>> GetHealthMetricsByChildAsync(Guid childId)
+        {
+            return await _unitOfWork.Repository<HealthMetric>().GetAll()
+                .Where(hm => hm.ChildId == childId)
+                .Include(hm => hm.Child)
+                .ToListAsync();
+        }
 
         public async Task<(Child?, List<Measurement>)> GetChildWithMeasurementsAsync(Guid childId)
         {
@@ -37,6 +70,13 @@ namespace CCP.Service
                 .FirstOrDefaultAsync(c => c.Id == childId);
 
             return (result, result?.Measurements?.ToList() ?? new List<Measurement>());
+        }
+
+
+
+        public async Task<List<Child>> GetChildrenByParent(Guid parentId)
+        {
+            return await _unitOfWork.Repository<Child>().GetAll().Where(c => c.UserId == parentId.ToString()).ToListAsync();
         }
 
     }

@@ -14,7 +14,7 @@ namespace CCP.Service
         {
             int ageInYears = CalculateAgeFromDateOfBirth(input.DateOfBirth);
             if (ageInYears < 1) ageInYears = 1;
-            if (ageInYears > 10) ageInYears = 10;
+            if (ageInYears > 20) ageInYears = 20;
             var gender = input.Gender;
 
             float heightStandard = gender == Gender.Male ? MeasurementStandards.MaleHeightStandard.GetValueOrDefault(ageInYears, 0)
@@ -30,9 +30,29 @@ namespace CCP.Service
                 HeightResult = GetHeightRating(input.Height, heightStandard),
                 WeightResult = GetWeightRating(input.Weight, weightStandard),
                 BMIResult = MeasurementStandards.GetBmiRating(bmi),
+                BMIResultConsul = MeasurementStandards.GetBMIResultString(MeasurementStandards.GetBmiRating(bmi)),
+                HeightResultConsul = GetHeightResultString(GetHeightRating(input.Height, heightStandard)),
+                WeightResultConsul = GetWeightResultString(GetWeightRating(input.Weight, weightStandard)),
                 HeadCircumferenceResult = GetHeadCircumferenceRating(input.HeadCircumference, headStandard),
+                HeadCircumferenceResultConsul = GetHeadCircumferenceResultString(GetHeadCircumferenceRating(input.HeadCircumference, headStandard)),
             };
         }
+
+        public string GetHeightResultString(HeightRating rating)
+        {
+            return rating == HeightRating.NormalHeight ? "Normal" : "Need consultation";
+        }
+
+        public string GetWeightResultString(WeightRating rating)
+        {
+            return rating == WeightRating.NormalWeight ? "Normal" : "Need consultation";
+        }
+
+        public string GetHeadCircumferenceResultString(HeadCircumferenceRating rating)
+        {
+            return rating == HeadCircumferenceRating.NormalHeadCircumference ? "Normal" : "Need consultation";
+        }
+
         private int CalculateAgeFromDateOfBirth(DateTime dob)
         {
             var today = DateTime.Today;

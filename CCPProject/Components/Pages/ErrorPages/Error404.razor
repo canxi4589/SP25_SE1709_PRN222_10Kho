@@ -1,0 +1,84 @@
+﻿@page "/error1"
+@using CCPProject.Components.Layout
+@layout EmptyLayout
+@inject NavigationManager Navigation
+
+<PageTitle>Error</PageTitle>
+
+@code {
+    private int StatusCode { get; set; }
+    private string ErrorMessage { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+        if (queryParams.TryGetValue("code", out var code))
+        {
+            if (int.TryParse(code, out int statusCode))
+            {
+                StatusCode = statusCode;
+            }
+        }
+
+        ErrorMessage = StatusCode switch
+        {
+            404 => "The page you are looking for does not exist.",
+            403 => "You do not have permission to view this page.",
+            500 => "An internal server error occurred.",
+            _ => "An unexpected error occurred."
+        };
+    }
+}
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+    <title>Doccure - Error @StatusCode</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="assets1/img/favicon.png">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="assets1/css/bootstrap.min.css">
+
+    <!-- Fontawesome CSS -->
+    <link rel="stylesheet" href="assets1/css/font-awesome.min.css">
+
+    <!-- Feathericon CSS -->
+    <link rel="stylesheet" href="assets1/css/feathericon.min.css">
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="assets1/css/style.css">
+
+    <!--[if lt IE 9]>
+        <script src="assets/js/html5shiv.min.js"></script>
+        <script src="assets/js/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body class="error-page">
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+
+        <div class="error-box">
+            <h1>@StatusCode</h1>
+            <h3 class="h2 mb-3"><i class="fa fa-warning"></i> Oops! Something went wrong</h3>
+            <p class="h4 font-weight-normal">@ErrorMessage</p>
+            <a href="/" class="btn btn-primary">Back to Home</a>
+        </div>
+
+    </div>
+    <!-- /Main Wrapper -->
+    <!-- jQuery -->
+    <script src="assets1/js/jquery-3.2.1.min.js"></script>
+
+    <!-- Bootstrap Core JS -->
+    <script src="assets1/js/popper.min.js"></script>
+    <script src="assets1/js/bootstrap.min.js"></script>
+
+    <!-- Custom JS -->
+    <script src="assets1/js/script.js"></script>
+
+</body>
