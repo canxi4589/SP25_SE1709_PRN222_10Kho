@@ -159,13 +159,13 @@
 
                                 @if (userRole == "Expert")
                                 {
-                                    <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/expert-dashboard")'>Expert Dashboard</a>
+                                    <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/expert-profile")'>Expert Dashboard</a>
+                                    
                                 }
                                 else if (userRole == "Parent")
                                 {
                                     <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/parent-dashboard")'>Parent Dashboard</a>
                                 }
-                                    <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/profile-settings")'>Profile Settings</a>
                                 <a class="dropdown-item" href="#" @onclick="Logout">Logout</a>
                             </div>
                         }
@@ -236,7 +236,7 @@
                 userRole = "Expert";
             }
             else{
-                NavigationManager.NavigateTo("/admin-dashboard", forceLoad: true);
+                userRole = "Admin";
 
             }
 

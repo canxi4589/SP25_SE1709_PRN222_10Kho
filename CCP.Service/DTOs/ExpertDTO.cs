@@ -14,8 +14,12 @@ namespace CCP.Service.DTOs
         public Guid Id { get; set; }
         public string Name { get; set; }
 
+        public string Specialty { get; set; }
+
         public string? ContactInfo { get; set; }
-        public string? Certificate { get; set; }
+        public string? CertificateUrl { get; set; }
         public decimal Price { get; set; }
+        public string UserId { get; set; }
+
     }
 }
