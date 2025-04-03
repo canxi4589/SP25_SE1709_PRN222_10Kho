@@ -1,4 +1,4 @@
-﻿@page "/checkout/{UserId}/{BookingDateTime}"
+﻿@page "/checkout/{UserId}/{BookingStart}/{BookingEnd}"
 @using CCP.Repositori.Entities
 @using CCP.Service.Vnpay
 @using CCP.Services
@@ -254,7 +254,7 @@
                             <div class="card-body">
                                 <div class="booking-doc-info">
                                     <a href="doctor-profile.html" class="booking-doc-img">
-                                        <img src="assets/img/doctors/doctor-thumb-02.jpg" alt="Expert Image">
+                                        <img src="https://people.com/thmb/8QOJNDgpfbWvi-LbzGF3knEjXTU=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc():focal(999x0:1001x2)/freddie-highmore-the-good-doctor-052024-2-2326544596844dc2869c5ec4a2f2f684.jpg" alt="Expert Image">
                                     </a>
                                     <div class="booking-info">
                                         <h4><a href="doctor-profile.html">@expert.Name</a></h4>
@@ -265,8 +265,10 @@
                                 <div class="booking-summary">
                                     <div class="booking-item-wrap">
                                         <ul class="booking-date">
-                                            <li>Date <span>@bookingDateTime.ToString("dd MMM yyyy")</span></li>
-                                            <li>Time <span>@bookingDateTime.ToString("hh:mm tt")</span></li>
+                                            <li>Date <span>@bookingStart.ToString("dd MMM yyyy")</span></li>
+                                            <li>Time Start <span>@bookingStart.ToString("hh:mm tt")</span></li>
+                                            <li>Time End <span>@bookingEnd.ToString("hh:mm tt")</span></li>
+
                                         </ul>
                                         <ul class="booking-fee">
                                             <li>Consulting Fee <span>$@expert.Price</span></li>
@@ -477,6 +479,10 @@
     private List<Measurement> measurements = new();
     private Measurement newMeasurement = new();
     private bool showAddMeasurementModal = false;
+    [Parameter] public string BookingStart { get; set; }
+    [Parameter] public string BookingEnd { get; set; }
+    private DateTime bookingStart;
+    private DateTime bookingEnd;
 
     protected override async Task OnInitializedAsync()
     {
@@ -493,7 +499,10 @@
                 return;
             }
 
-            bookingDateTime = DateTime.Parse(BookingDateTime);
+            // Parse both start and end times
+            bookingStart = DateTime.Parse(Uri.UnescapeDataString(BookingStart));
+            bookingEnd = DateTime.Parse(Uri.UnescapeDataString(BookingEnd));
+
             var currentUser = await UserManager.GetUserAsync(user);
             if (currentUser == null)
             {
@@ -509,7 +518,6 @@
             appointmentModel.Email = currentUser.Email ?? "";
             appointmentModel.Phone = currentUser.PhoneNumber ?? "0366532672";
 
-            // If a child is pre-selected, load their data based on specialty
             if (!string.IsNullOrEmpty(appointmentModel.SelectedChildId))
             {
                 if (expert?.Specialty?.Name?.ToLower() == "child nutrition")
@@ -531,7 +539,6 @@
             isLoading = false;
         }
     }
-
     private void ShowAddChildModal()
     {
         newChild = new Child
@@ -718,19 +725,26 @@
                     ParentId = temp.Id,
                     ChildId = Guid.Parse(appointmentModel.SelectedChildId),
                     ExpertId = expert.Id,
-                    StartTime = TimeSpan.FromTicks(bookingDateTime.Ticks - bookingDateTime.Date.Ticks),
-                    EndTime = TimeSpan.FromTicks(bookingDateTime.Ticks - bookingDateTime.Date.Ticks).Add(TimeSpan.FromHours(1)),
+                    StartTime = TimeSpan.FromTicks(bookingStart.Ticks - bookingStart.Date.Ticks),
+                    EndTime = TimeSpan.FromTicks(bookingEnd.Ticks - bookingEnd.Date.Ticks),
                     PhysicalActivityId = string.IsNullOrEmpty(appointmentModel.AdditionalInfo.SelectedPhysicalActivityId) ? null : Guid.Parse(appointmentModel.AdditionalInfo.SelectedPhysicalActivityId),
                     MeasurementId = string.IsNullOrEmpty(appointmentModel.AdditionalInfo.SelectedMeasurementId) ? null : Guid.Parse(appointmentModel.AdditionalInfo.SelectedMeasurementId),
-                    BookingDate = bookingDateTime.Date,
+                    BookingDate = bookingStart.Date, // Use start date
                     Price = expert.Price,
-                    Status = "Paid", 
+                    Status = "Pending",
                     Type = expert.Specialty?.Name,
                 };
 
             await ExpertService.BookAppointment(appointment);
+            if (appointmentModel.PaymentMethod == "Vnpay")
+            {
                 string paymentUrl = await vnpay.CreatePaymentUrlAsync(appointment);
                 NavigationManager.NavigateTo(paymentUrl, forceLoad: true);
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/booking-success");
+            }
         }
         catch (Exception ex)
         {
@@ -741,7 +755,6 @@
             isSubmitting = false;
         }
     }
-
     public class AppointmentCheckoutModel
     {
         public string SelectedChildId { get; set; } = "";
