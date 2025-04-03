@@ -1,4 +1,5 @@
-﻿using CCP.Service.DTOs;
+﻿using CCP.Repositori.Entities;
+using CCP.Service.DTOs;
 
 namespace CCP.Service
 {
@@ -12,5 +13,6 @@ namespace CCP.Service
         Task<ParentDto?> GetParentProfileAsync(Guid userId);
         Task<Guid?> GetParentProfileIdAsync(string email);
         Task<bool> UpdateParentProfileAsync(Guid userId, ParentDto dto);
+        Task<Child> GetChildren(Guid childId);
     }
 }

@@ -196,5 +196,16 @@ namespace CCP.Service
                 }).ToList()
             };
         }
+
+        public async Task<Child> GetChildren(Guid childId)
+        {
+            var children = await _context.Children
+                .Include(c => c.PhysicalActivities)
+                .Include(c => c.SleepPatterns)
+                .Include(c => c.NutritionalIntakes)
+                .Include(c => c.HealthMetrics)
+                .Where(c => c.Id == childId).FirstOrDefaultAsync();
+            return children;
+        }
     }
 }

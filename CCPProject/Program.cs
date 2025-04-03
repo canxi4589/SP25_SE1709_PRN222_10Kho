@@ -29,6 +29,7 @@ builder.Services.AddScoped<IExpertService1,ExpertService1>();
 builder.Services.AddScoped<IParentProfileService, ParentProfileService>(); 
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IMeasurementInputService, MeasurementInputService>();
+builder.Services.AddScoped<IMeasurementAnalysisService, MeasurementAnalysisService>();
 
 
 builder.Services.AddScoped<IExpertService, ExpertService>();

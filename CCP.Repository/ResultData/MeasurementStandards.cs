@@ -129,5 +129,10 @@ namespace CCP.Repositori.ResultData
                 _ => BmiRating.ObesityIII
             };
         }
+
+        public static string GetBMIResultString(BmiRating rating)
+        {
+            return rating == BmiRating.Normal ? "Normal" : "Need consultation";
+        }
     }
 }

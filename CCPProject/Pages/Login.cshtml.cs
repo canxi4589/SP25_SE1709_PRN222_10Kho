@@ -47,7 +47,8 @@ namespace CCPProject.Pages
                     new Claim(ClaimTypes.Name, user.UserName),
                     new Claim(ClaimTypes.Email, user.Email ?? ""),
                     new Claim("LastLogin", user.LastLogin?.ToString() ?? ""),
-                    new Claim(ClaimTypes.Sid, user.Id)
+                    new Claim(ClaimTypes.Sid, user.Id),
+                    new Claim(ClaimTypes.DateOfBirth, user.DateOfBirth.ToString())
                 };
 
             var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);

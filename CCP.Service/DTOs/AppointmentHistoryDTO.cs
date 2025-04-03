@@ -12,8 +12,10 @@ namespace CCP.Service.DTOs
         public string ParentId { get; set; }
         public Guid ChildId { get; set; }
         public Guid ExpertId { get; set; }
+        public string ParentName { get; set; } // New property for parent's full name
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
+        public string ChildName { get; set; }
         public DateTime BookingDate { get; set; }
         public string Status { get; set; }
         public decimal Price { get; set; }

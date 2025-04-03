@@ -170,25 +170,42 @@ namespace CCP.Service.ExpertService
         }
         public async Task<List<AppointmentHistoryDTO>> GetExpertAppointmentsAsync(Guid expertId)
         {
-            var appointments = await _unitOfWork.Repository<Appointment>()
-                .GetAll()
-                .Where(a => a.ExpertId == expertId) // Include AppUser for ParentName
-                                        // If Child entity exists and has a Name property, include it
-                                        // .Include(a => a.Child) 
-                .Select(a => new AppointmentHistoryDTO
-                {
-                    Id = a.Id,
-                    ParentId = a.ParentId,
-                    ChildId = a.ChildId,
-                    ExpertId = a.ExpertId,
-                    StartTime = a.StartTime,
-                    EndTime = a.EndTime,
-                    BookingDate = a.BookingDate,
-                    Status = a.Status,
-                    Price = a.Price,
-               
-                })
-                .ToListAsync();
+            var appointmentWithChild = await _unitOfWork.Repository<Appointment>()
+           .GetAll()
+           .Where(a => a.ExpertId == expertId)
+           .Join(
+               _unitOfWork.Repository<Child>().GetAll(),
+               appointment => appointment.ChildId,
+               child => child.Id,
+               (appointment, child) => new
+               {
+                   Appointment = appointment,
+                   ChildName = child.Name
+               }
+           )
+       .ToListAsync();
+
+            // Step 2: Fetch all AppUsers (parents) in one go to avoid multiple database calls
+            var parentIds = appointmentWithChild.Select(a => a.Appointment.ParentId).Distinct().ToList();
+            var parents = await _userManager.Users
+                .Where(u => parentIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.FullName);
+
+            // Step 3: Map to AppointmentHistoryDTO, including ParentName from the dictionary
+            var appointments = appointmentWithChild.Select(combined => new AppointmentHistoryDTO
+            {
+                Id = combined.Appointment.Id,
+                ParentId = combined.Appointment.ParentId,
+                ParentName = parents.ContainsKey(combined.Appointment.ParentId) ? parents[combined.Appointment.ParentId] : "Unknown",
+                ChildId = combined.Appointment.ChildId,
+                ChildName = combined.ChildName,
+                ExpertId = combined.Appointment.ExpertId,
+                StartTime = combined.Appointment.StartTime,
+                EndTime = combined.Appointment.EndTime,
+                BookingDate = combined.Appointment.BookingDate,
+                Status = combined.Appointment.Status,
+                Price = combined.Appointment.Price
+            }).ToList();
 
             return appointments;
         }
