@@ -724,20 +724,13 @@
                     MeasurementId = string.IsNullOrEmpty(appointmentModel.AdditionalInfo.SelectedMeasurementId) ? null : Guid.Parse(appointmentModel.AdditionalInfo.SelectedMeasurementId),
                     BookingDate = bookingDateTime.Date,
                     Price = expert.Price,
-                    Status = "Pending", // Set to "Pending" until payment is confirmed
+                    Status = "Paid", 
                     Type = expert.Specialty?.Name,
                 };
 
             await ExpertService.BookAppointment(appointment);
-            if (appointmentModel.PaymentMethod == "Vnpay")
-            {
                 string paymentUrl = await vnpay.CreatePaymentUrlAsync(appointment);
                 NavigationManager.NavigateTo(paymentUrl, forceLoad: true);
-            }
-            else
-            {
-                NavigationManager.NavigateTo("/booking-success");
-            }
         }
         catch (Exception ex)
         {
