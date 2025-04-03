@@ -40,7 +40,7 @@
                                     <li class="nav-item">
                                         <a class="nav-link @(activeContentTab == "Appointments" ? "active" : "")" @onclick='() => SetContentTab("Appointments")'>Appointments</a>
                                     </li>
-                                    
+
                                 </ul>
                             </nav>
 
@@ -148,16 +148,30 @@
                 {
                     @if (child == null)
                     {
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Select a Child</h5>
-                                <div class="list-group">
+                        <div class="card shadow-lg rounded-4 border-0">
+                            <div class="card-body p-4">
+                                <h5 class="card-title text-center fw-bold text-primary mb-4">
+                                    <i class="fas fa-users me-2"></i>Select a Child
+                                </h5>
+                                <div class="list-group list-group-flush">
                                     @foreach (var c in children)
                                     {
-                                        <a href="javascript:void(0);" class="list-group-item list-group-item-action" @onclick="() => SelectChild(c.Id)">
-                                            <h5 class="mb-1">@c.Name</h5>
-                                            <small>Birthdate: @c.DateOfBirth.ToShortDateString()</small>
-                                        </a>
+                                        <div class="list-group-item list-group-item-action bg-white shadow-sm rounded-3 mb-3 fancy-child-card" @onclick="() => SelectChild(c.Id)">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle me-3">
+                                                    <i class="fas fa-child fa-2x text-primary"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-1 fw-semibold text-dark">@c.Name</h5>
+                                                    <small class="text-muted">Birthdate: @c.DateOfBirth.ToShortDateString()</small>
+                                                </div>
+                                                <div class="ms-auto">
+                                                    <span class="badge bg-primary rounded-pill px-2 py-1">
+                                                        <i class="fas fa-arrow-right"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     }
                                 </div>
                             </div>
@@ -672,3 +686,56 @@
 
     private void NavigateToConsultation() => NavigationManager.NavigateTo("/consultation-booking");
 }
+
+<style>
+    .fancy-child-card {
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    }
+
+        .fancy-child-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+            border-color: #007bff;
+            background: linear-gradient(135deg, #f1faff 0%, #e9ecef 100%);
+        }
+
+    .avatar-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s ease;
+    }
+
+    .fancy-child-card:hover .avatar-circle {
+        background: #007bff;
+    }
+
+        .fancy-child-card:hover .avatar-circle i {
+            color: #fff;
+        }
+
+    .list-group-flush > .fancy-child-card:first-child {
+        border-top-left-radius: 12px !important;
+        border-top-right-radius: 12px !important;
+    }
+
+    .list-group-flush > .fancy-child-card:last-child {
+        border-bottom-left-radius: 12px !important;
+        border-bottom-right-radius: 12px !important;
+    }
+
+    .badge {
+        transition: transform 0.3s ease;
+    }
+
+    .fancy-child-card:hover .badge {
+        transform: scale(1.1);
+    }
+</style>
