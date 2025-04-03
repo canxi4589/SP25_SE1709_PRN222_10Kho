@@ -1,0 +1,278 @@
+﻿@page "/admin/add-expert"
+@using CCP.Service.DTOs
+@using CCP.Service.ExpertService
+@using CCP.Repositori.Entities
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@attribute [Authorize(Roles = "Admin")]
+@layout AdminDashboard
+@inject IExpertService ExpertService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Add New Expert</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Add New Expert</h3>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading specialties...</p>
+                        </div>
+                    }
+                    else if (!specialties.Any())
+                    {
+                        <div class="alert alert-warning text-center">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            No specialties available. Please add a specialty first.
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="addExpertDto" OnValidSubmit="HandleValidSubmit">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="alert alert-danger" role="alert" />
+
+                            <div class="row mb-3">
+                                <label for="name" class="col-md-4 col-form-label fw-bold">Name</label>
+                                <div class="col-md-8">
+                                    <InputText id="name" class="form-control" @bind-Value="addExpertDto.Name" placeholder="Enter expert's name" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="fullName" class="col-md-4 col-form-label fw-bold">Full Name</label>
+                                <div class="col-md-8">
+                                    <InputText id="fullName" class="form-control" @bind-Value="addExpertDto.FullName" placeholder="Enter expert's full name" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="specialty" class="col-md-4 col-form-label fw-bold">Specialty</label>
+                                <div class="col-md-8">
+                                    <InputSelect id="specialty" class="form-select" @bind-Value="addExpertDto.SpecialtyId">
+                                        <option value="">Select a specialty</option>
+                                        @foreach (var specialty in specialties)
+                                        {
+                                            <option value="@specialty.Id">@specialty.Name</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="contactInfo" class="col-md-4 col-form-label fw-bold">Contact Info</label>
+                                <div class="col-md-8">
+                                    <InputText id="contactInfo" class="form-control" @bind-Value="addExpertDto.ContactInfo" placeholder="Enter contact information" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="price" class="col-md-4 col-form-label fw-bold">Price</label>
+                                <div class="col-md-8">
+                                    <InputNumber id="price" class="form-control" @bind-Value="addExpertDto.Price" placeholder="Enter price per session" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="email" class="col-md-4 col-form-label fw-bold">Email</label>
+                                <div class="col-md-8">
+                                    <InputText id="email" class="form-control" @bind-Value="addExpertDto.Email" placeholder="Enter expert's email" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label for="password" class="col-md-4 col-form-label fw-bold">Password</label>
+                                <div class="col-md-8">
+                                    <InputText id="password" type="password" class="form-control" @bind-Value="addExpertDto.Password" placeholder="Enter a password (min 6 characters)" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label class="col-md-4 col-form-label fw-bold">Availability</label>
+                                <div class="col-md-8">
+                                    <p class="text-muted mb-2">
+                                        Default time: 07:00 - 18:00
+                                    </p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Available Days:</label>
+                                        <div class="d-flex flex-wrap">
+                                            @foreach (var day in daysOfWeek)
+                                            {
+                                                var currentDay = day;
+                                                <div class="form-check me-3">
+                                                    <input type="checkbox" class="form-check-input" id="@($"day-{currentDay}")" @bind="selectedDays[currentDay]" />
+                                                    <label class="form-check-label" for="@($"day-{currentDay}")">@currentDay</label>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="availabilityStatus" class="form-label">Status:</label>
+                                        <InputSelect id="availabilityStatus" class="form-select" @bind-Value="defaultAvailabilityStatus">
+                                            <option value="Available">Available</option>
+                                            <option value="Unavailable">Unavailable</option>
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        <span>Adding...</span>
+                                    }
+                                    else
+                                    {
+                                        <span><i class="bi bi-plus-circle me-2"></i>Add Expert</span>
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
+
+                        @if (saveMessage != null)
+                        {
+                            <div class="alert @alertClass mt-3 alert-dismissible fade show" role="alert">
+                                @saveMessage
+                                <button type="button" class="btn-close" @onclick="() => { saveMessage = null; StateHasChanged(); }" aria-label="Close"></button>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private AddExpertDTO addExpertDto = new();
+    private List<Specialty> specialties = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private string saveMessage;
+    private string alertClass;
+    private readonly string[] daysOfWeek = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+    private readonly string[] availabilityStatuses = { "Available", "Unavailable" };
+    private readonly TimeSpan defaultStartTime = TimeSpan.FromHours(7); // 07:00
+    private readonly TimeSpan defaultEndTime = TimeSpan.FromHours(18); // 18:00
+    private Dictionary<string, bool> selectedDays = new Dictionary<string, bool>
+    {
+        { "Monday", false },
+        { "Tuesday", false },
+        { "Wednesday", false },
+        { "Thursday", false },
+        { "Friday", false },
+        { "Saturday", false },
+        { "Sunday", false }
+    };
+    private string defaultAvailabilityStatus = "Available";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            specialties = await ExpertService.GetSpecialtiesAsync();
+        }
+        catch (Exception ex)
+        {
+            saveMessage = $"Error loading specialties: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Populate availabilities based on selected days
+        addExpertDto.Availabilities.Clear();
+        foreach (var day in selectedDays.Where(d => d.Value))
+        {
+            addExpertDto.Availabilities.Add(new ExpertAvailabilitiesDTO
+                {
+                    DayOfWeek = day.Key,
+                    StartTime = defaultStartTime,
+                    EndTime = defaultEndTime,
+                    Status = defaultAvailabilityStatus
+                });
+        }
+
+        if (!addExpertDto.Availabilities.Any())
+        {
+            saveMessage = "Please select at least one day for availability.";
+            alertClass = "alert-danger";
+            isSubmitting = false;
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            isSubmitting = true;
+            var newExpert = await ExpertService.AddExpertAsync(addExpertDto);
+            saveMessage = $"Expert '{newExpert.Name}' added successfully!";
+            alertClass = "alert-success";
+            addExpertDto = new();
+            foreach (var day in selectedDays.Keys.ToList())
+            {
+                selectedDays[day] = false;
+            }
+            defaultAvailabilityStatus = "Available";
+        }
+        catch (Exception ex)
+        {
+            saveMessage = ex.InnerException != null
+                ? $"Error adding expert: {ex.Message}. Details: {ex.InnerException.Message}"
+                : $"Error adding expert: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+}
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        border-color: #007bff;
+    }
+
+    .btn-primary {
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .alert {
+        border-radius: 5px;
+    }
+</style>

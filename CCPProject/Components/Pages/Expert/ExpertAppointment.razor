@@ -1,0 +1,260 @@
+﻿@page "/expert-appointments"
+@using CCP.Service.DTOs
+@using CCP.Service.ExpertService
+@using CCP.Repositori.Entities
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using CCPProject.Components.Layout
+@layout ExpertDashboard
+@attribute [Authorize]
+@inject IExpertService ExpertService
+@inject UserManager<AppUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>My Appointments</PageTitle>
+
+<div class="container mt-2">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">My Appointments</h3>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading appointments...</p>
+                        </div>
+                    }
+                    else if (expert == null)
+                    {
+                        <div class="alert alert-warning text-center">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            You need to create an expert profile to view appointments.
+                            <a href="/expert-profile" class="alert-link">Create Profile</a>
+                        </div>
+                    }
+                    else if (!upcomingAppointments.Any() && !pastAppointments.Any())
+                    {
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-info-circle me-2"></i>
+                            You have no appointments scheduled.
+                        </div>
+                    }
+                    else
+                    {
+                        <ul class="nav nav-tabs mb-4" id="appointmentTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab" aria-controls="upcoming" aria-selected="true">
+                                    Upcoming (@upcomingAppointments.Count)
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab" aria-controls="past" aria-selected="false">
+                                    Past (@pastAppointments.Count)
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="appointmentTabContent">
+                            <div class="tab-pane fade show active" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
+                                @if (!upcomingAppointments.Any())
+                                {
+                                    <div class="alert alert-info text-center">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        No upcoming appointments.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Time</th>
+                                                    <th>Parent</th>
+                                                    <th>Child</th>
+                                                    <th>Status</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var appointment in upcomingAppointments)
+                                                {
+                                                    <tr>
+                                                        <td>@appointment.BookingDate.ToString("MMM dd, yyyy")</td>
+                                                        <td>@appointment.StartTime.ToString(@"hh\:mm") - @appointment.EndTime.ToString(@"hh\:mm")</td>
+                                                        <td>@appointment.ParentId</td>
+                                                        <td>@appointment.ChildId</td>
+                                                        <td>
+                                                            <span class="badge @GetStatusBadgeClass(appointment.Status)">
+                                                                @appointment.Status
+                                                            </span>
+                                                        </td>
+                                                        <td>@appointment.Price.ToString("C")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="tab-pane fade" id="past" role="tabpanel" aria-labelledby="past-tab">
+                                @if (!pastAppointments.Any())
+                                {
+                                    <div class="alert alert-info text-center">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        No past appointments.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Time</th>
+                                                    <th>Parent</th>
+                                                    <th>Child</th>
+                                                    <th>Status</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var appointment in pastAppointments)
+                                                {
+                                                    <tr>
+                                                        <td>@appointment.BookingDate.ToString("MMM dd, yyyy")</td>
+                                                        <td>@appointment.StartTime.ToString(@"hh\:mm") - @appointment.EndTime.ToString(@"hh\:mm")</td>
+                                                        <td>@appointment.ParentId</td>
+                                                        <td>@appointment.ChildId</td>
+                                                        <td>
+                                                            <span class="badge @GetStatusBadgeClass(appointment.Status)">
+                                                                @appointment.Status
+                                                            </span>
+                                                        </td>
+                                                        <td>@appointment.Price.ToString("C")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ExpertDTO expert;
+    private bool isLoading = true;
+    private List<AppointmentHistoryDTO> allAppointments = new();
+    private List<AppointmentHistoryDTO> upcomingAppointments = new();
+    private List<AppointmentHistoryDTO> pastAppointments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity.IsAuthenticated)
+            {
+                var userId = user.FindFirst(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userId != null)
+                {
+                    var appUser = await UserManager.FindByIdAsync(userId);
+                    if (appUser != null)
+                    {
+                        expert = await ExpertService.GetExpertByUserIdAsync(userId);
+                        if (expert != null)
+                        {
+                            allAppointments = await ExpertService.GetExpertAppointmentsAsync(expert.Id);
+                            var now = DateTime.Now;
+                            upcomingAppointments = allAppointments
+                                .Where(a => a.BookingDate >= now)
+                                .OrderBy(a => a.BookingDate)
+                                .ThenBy(a => a.StartTime)
+                                .ToList();
+                            pastAppointments = allAppointments
+                                .Where(a => a.BookingDate < now)
+                                .OrderByDescending(a => a.BookingDate)
+                                .ThenByDescending(a => a.StartTime)
+                                .ToList();
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // You might want to display an error message here
+            Console.WriteLine($"Error loading appointments: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "confirmed" => "bg-success",
+            "pending" => "bg-warning",
+            "cancelled" => "bg-danger",
+            "completed" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+
+    .card-header {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+
+    .nav-tabs .nav-link {
+        border-radius: 5px 5px 0 0;
+    }
+
+        .nav-tabs .nav-link.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+    .table th {
+        background-color: #f8f9fa;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f1f3f5;
+    }
+
+    .badge {
+        font-size: 0.9em;
+    }
+</style>
