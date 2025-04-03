@@ -1,0 +1,113 @@
+﻿@page "/booking"
+@using CCP.Repositori.Entities
+@using CCP.Service.DTOs
+@using CCP.Service.ExpertService
+@using CCP.Service.AppointmentService
+@rendermode InteractiveServer
+<h3>Booking</h3>
+
+<div>
+    <label for="specialty">Choose a Specialty:</label>
+    <select id="specialty" @onchange="OnSpecialtyChange">
+        <option value="">Select a Specialty</option>
+        @foreach (var specialty in Specialties)
+        {
+            <option value="@specialty.Id">@specialty.Name</option>
+        }
+    </select>
+</div>
+
+@if (SelectedSpecialty != null)
+{
+    <div>
+        <h4>Enter Data for @SelectedSpecialty.Name</h4>
+        <!-- Add input fields specific to the selected specialty here -->
+        @* Example input fields *@
+        <div>
+            <label for="data">Data:</label>
+            <input type="text" id="data" @bind="SpecialtyData" />
+        </div>
+    </div>
+
+    <div>
+        <label for="expert">Choose an Expert:</label>
+        <select id="expert" @onchange="OnExpertChange">
+            <option value="">Select an Expert</option>
+            @foreach (var expert in Experts)
+            {
+                <option value="@expert.Id">@expert.Name</option>
+            }
+        </select>
+    </div>
+}
+
+@if (SelectedExpert != null)
+{
+    <div>
+        <label for="time">Choose an Available Time:</label>
+        <select id="time" @bind="SelectedTime">
+            <option value="">Select a Time</option>
+            @foreach (var time in AvailableTimes)
+            {
+                <option value="@time">@time</option>
+            }
+        </select>
+    </div>
+
+    <button @onclick="BookAppointment">Book Appointment</button>
+}
+
+@code {
+    private List<Specialty> Specialties = new();
+    private List<ExpertDTO> Experts = new();
+    private List<ExpertAvailability> AvailableTimes = new();
+    private Specialty? SelectedSpecialty;
+    private ExpertDTO? SelectedExpert;
+    private string? SpecialtyData;
+    private string? SelectedTime;
+
+    [Inject] private IExpertService ExpertService { get; set; }
+    [Inject] private IAppointmentService AppointmentService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Specialties = await ExpertService.GetSpecialtiesAsync();
+    }
+
+    private async Task OnSpecialtyChange(ChangeEventArgs e)
+    {
+        var specialtyId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(specialtyId))
+        {
+            SelectedSpecialty = Specialties.FirstOrDefault(s => s.Id.ToString().Equals(specialtyId));
+            Experts = await ExpertService.GetExpertBySpecialityAsync(specialtyId);
+        }
+    }
+
+    private async Task OnExpertChange(ChangeEventArgs e)
+    {
+        var expertId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(expertId))
+        {
+            SelectedExpert = Experts.FirstOrDefault(ex => ex.Id.ToString() == expertId);
+            AvailableTimes = await ExpertService.ExpertAvailabilities(expertId);
+        }
+    }
+
+    private async Task BookAppointment()
+    {
+        if (SelectedSpecialty != null && SelectedExpert != null && !string.IsNullOrEmpty(SelectedTime))
+        {
+            var appointment = new AppointmentDTO
+                {
+                    ExpertId = SelectedExpert.Id,
+
+                    
+                    
+                };
+
+            await AppointmentService.CreateAppointmentAsync(appointment);
+            // Handle booking confirmation or error
+        }
+    }
+}

@@ -4,6 +4,7 @@ namespace CCPProject.Pages
     using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.RazorPages;
+    using System.Security.Claims;
 
     public class LoginProcessModel : PageModel
     {
@@ -33,40 +34,37 @@ namespace CCPProject.Pages
                 return RedirectToPage("/Signin", new { error = ErrorMessage });
             }
 
-            var result = await _signInManager.PasswordSignInAsync(user.UserName, password, rememberMe, lockoutOnFailure: false);
-
-            if (result.Succeeded)
-            {
-                user.LastLogin = DateTime.Now;
-                await _userManager.UpdateAsync(user);
-
-                // Check if the user is an admin
-                if (await _userManager.IsInRoleAsync(user, "Admin"))
-                {
-                    return Redirect("/admin-dashboard");
-                }
-
-                return Redirect("/");
-            }
-
-            else if (result.IsLockedOut)
-            {
-                ErrorMessage = "Your account is locked out. Please try again later or contact support.";
-            }
-            else if (result.RequiresTwoFactor)
-            {
-                ErrorMessage = "Two-factor authentication is required. Please complete the 2FA process.";
-            }
-            else if (result.IsNotAllowed)
-            {
-                ErrorMessage = "Sign-in is not allowed. Please verify your email or contact support.";
-            }
-            else
+            // Check password manually
+            var passwordValid = await _userManager.CheckPasswordAsync(user, password);
+            if (!passwordValid)
             {
                 ErrorMessage = "Invalid email or password.";
+                return RedirectToPage("/Signin", new { error = ErrorMessage });
             }
 
-            return RedirectToPage("/Signin", new { error = ErrorMessage });
+            var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Email, user.Email ?? ""),
+                    new Claim("LastLogin", user.LastLogin?.ToString() ?? ""),
+                    new Claim(ClaimTypes.Sid, user.Id)
+                };
+
+            var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+            await _signInManager.SignInAsync(user, rememberMe);
+
+            user.LastLogin = DateTime.Now;
+            await _userManager.UpdateAsync(user);
+
+            // Redirect based on role
+            if (await _userManager.IsInRoleAsync(user, "Admin"))
+            {
+                return Redirect("/admin-dashboard");
+            }
+
+            return Redirect("/");
         }
     }
 }

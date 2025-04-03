@@ -1,6 +1,7 @@
 ﻿using CCP.Repositori.Data;
 using CCP.Repositori.Entities;
 using CCP.Repositori.Repository;
+using CCP.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Ocsp;
@@ -17,12 +18,14 @@ namespace CCP.Services
         private readonly UserManager<AppUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
         private readonly Random _random = new Random();
+        private readonly IMeasurementInputService measurementInputService;
 
-        public ExpertService1(UserManager<AppUser> userManager, IUnitOfWork unitOfWork)
+        public ExpertService1(UserManager<AppUser> userManager, IUnitOfWork unitOfWork, IMeasurementInputService measurementInputService)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             SeedInitialAvailabilityData();
+            this.measurementInputService = measurementInputService;
         }
         public async Task<Expert> GetExpertByUserId(string userId)
         {
@@ -86,8 +89,8 @@ namespace CCP.Services
 
         public async Task<Measurement> AddMeasurement(Measurement measurement)
         {
-            await _unitOfWork.Repository<Measurement>().AddAsync(measurement);
-            await _unitOfWork.SaveChangesAsync();
+            await measurementInputService.SaveAsync(measurement.ChildId, new Service.DTOs.MeasurementInputDto { HeadCircumference = measurement.HeadCircumference,Height = measurement.Height,
+            Weight = measurement.Weight});
             return measurement;
         }
 

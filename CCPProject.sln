@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCPProject", "CCPProject\CCPProject.csproj", "{4505792F-B26F-4E2C-9078-C145A3A33570}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCPProject", "CCPProject\CCPProject.csproj", "{4505792F-B26F-4E2C-9078-C145A3A33570}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCP.Repositori", "CCP.Repository\CCP.Repositori.csproj", "{D5B448A0-451D-42CE-860D-281FF103F3F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCP.Repositori", "CCP.Repository\CCP.Repositori.csproj", "{D5B448A0-451D-42CE-860D-281FF103F3F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCP.Service", "CCP.Service\CCP.Service.csproj", "{B1E38419-5905-4238-9A30-8EB5EDF13F5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCP.Service", "CCP.Service\CCP.Service.csproj", "{B1E38419-5905-4238-9A30-8EB5EDF13F5C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +30,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AE46A2DC-3E9F-4118-B523-BEBAA86A2214}
 	EndGlobalSection
 EndGlobal

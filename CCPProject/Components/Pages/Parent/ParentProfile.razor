@@ -1,0 +1,309 @@
+﻿@page "/parent-profile"
+@using CCPProject.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using CCP.Service
+@using CCP.Service.DTOs
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@inject IParentProfileService ParentProfileService
+@layout Layout1
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+<title>Doccure - Parent Profile</title>
+
+<!-- Favicons -->
+<link type="image/x-icon" href="assets/img/favicon.png" rel="icon">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+
+<!-- Fontawesome CSS -->
+<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+
+<!-- Main CSS -->
+<link rel="stylesheet" href="assets/css/style.css">
+
+<div class="main-wrapper">
+
+    <!-- Page Content -->
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Profile Sidebar -->
+                <div class="col-md-5 col-lg-4 col-xl-3 theiaStickySidebar">
+                    <div class="profile-sidebar">
+                        <div class="widget-profile pro-widget-content">
+                            <div class="profile-info-widget">
+                                <a href="#" class="booking-doc-img">
+                                    <img src="@(userAvatar ?? "assets/img/patients/patient.jpg")" alt="User Image">
+                                </a>
+                                <div class="profile-det-info">
+                                    <h3>@(userFullName ?? "Richard Wilson")</h3>
+                                    <div class="patient-details">
+                                        <h5><i class="fas fa-birthday-cake"></i> @(birthDate ?? "24 Jul 1983"), @(age ?? 38) years</h5>
+                                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> @(email ?? string.Empty)</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dashboard-widget">
+                            <nav class="dashboard-menu">
+                                <ul>
+                                    <li class="@(activeTab == "Dashboard" ? "active" : "")">
+                                        <a @onclick='() => SetActiveTab("Dashboard")'>
+                                            <i class="fas fa-columns"></i>
+                                            <span>Appointments</span>
+                                        </a>
+                                    </li>
+                                    <li class="@(activeTab == "Measurement History" ? "active" : "")">
+                                        <a @onclick='() => SetActiveTab("Measurement History")'>
+                                            <i class="fas fa-bookmark"></i>
+                                            <span>Measurement History</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <li class="@(activeTab == "Parent Profile" ? "active" : "")">
+                                        <a @onclick='() => NavigateToParentProfile()'>
+                                            <i class="fas fa-user"></i>
+                                            <span>Parent Profile</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <li class="@(activeTab == "Password" ? "active" : "")">
+                                        <a @onclick='() => SetActiveTab("Password")'>
+                                            <i class="fas fa-lock"></i>
+                                            <span>Change Password</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a @onclick="Logout">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                            <span>Logout</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="col-md-7 col-lg-8 col-xl-9">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <p>Loading profile...</p>
+                        </div>
+                    }
+                    else if (parentProfile != null)
+                    {
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title">Parent Profile</h4>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Full Name:</strong> @parentProfile.FullName</p>
+                                        <p><strong>Email:</strong> @parentProfile.Email</p>
+                                        <p><strong>Status:</strong> @(parentProfile.IsActive ? "Active" : "Inactive")</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Registration Date:</strong> @parentProfile.RegistrationDate.ToString("dd MMM yyyy")</p>
+                                        <p><strong>Last Login:</strong> @(parentProfile.LastLogin?.ToString("dd MMM yyyy HH:mm") ?? "Never")</p>
+                                        <p><strong>Date of Birth:</strong> @(parentProfile.DateOfBirth?.ToString("dd MMM yyyy") ?? "Not specified")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Children</h4>
+                                @if (parentProfile.Children == null || !parentProfile.Children.Any())
+                                {
+                                    <p>No children registered yet.</p>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Date of Birth</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var child in parentProfile.Children)
+                                                {
+                                                    <tr>
+                                                        <td>@child.Name</td>
+                                                        <td>@(child.DateOfBirth.ToString("dd MMM yyyy") ?? "Not specified")</td>
+                                                        <td>
+                                                            <button class="btn btn-primary btn-sm" @onclick="() => EditChild(child.Id.Value)">Edit</button>
+                                                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteChild(child.Id.Value)">Delete</button>
+                                                            <button class="btn btn-info btn-sm" @onclick="() => ViewHistory(child.Id.Value)">
+                                                                <i class="fas fa-history"></i> View History
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                <button class="btn btn-success mt-3" @onclick="AddChild">Add New Child</button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <p>Unable to load profile information.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/popper.min.js"></script>
+<script src="assets/js/bootstrap.min.js"></script>
+<script src="assets/js/slick.js"></script>
+<script src="assets/js/script.js"></script>
+
+@code {
+    private bool isMobileMenuOpen = false;
+    private string? activeMenu = null;
+    private bool isAuthenticated = false;
+    private string? userName = null;
+    private string? userFullName = null;
+    private string? userRole = null;
+    private string? userAvatar = null;
+    private bool showUserDropdown = false;
+    private string activeTab = "Parent Profile"; // Set default to Parent Profile
+    private string? birthDate = null;
+    private int? age = null;
+    private string? email = null;
+    private int unreadMessages = 0;
+    public List<BreadcrumbItem> Breadcrumbs { get; set; } = new();
+    public string? BreadcrumbTitle { get; set; }
+    private ParentDto? parentProfile;
+    private bool isLoading = true;
+    private Guid? userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+
+
+
+        if (isAuthenticated)
+        {
+            userName = user.Identity?.Name ?? "User";
+            userFullName = user.FindFirst("name")?.Value ?? userName;
+            userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "Parent";
+            userAvatar = user.FindFirst("avatar")?.Value ?? "assets/img/patients/patient.jpg";
+            birthDate = user.FindFirst("birthdate")?.Value;
+            age = user.FindFirst("age")?.Value != null ? int.Parse(user.FindFirst("age")?.Value) : null;
+
+            // Get user ID from claims (assuming it's stored there)
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userIdClaim, out Guid parsedUserId))
+            {
+                userId = parsedUserId;
+                parentProfile = await ParentProfileService.GetParentProfileAsync(parsedUserId);
+                if (parentProfile != null && parentProfile.Children == null)
+                {
+                    parentProfile.Children = (await ParentProfileService.GetChildrenAsync(parsedUserId)).ToList();
+                }
+            }
+            birthDate = parentProfile.DateOfBirth.ToString();
+            age = CalculateAge(birthDate);
+            email = parentProfile.Email;
+
+        }
+
+        if (!Breadcrumbs.Any())
+        {
+            Breadcrumbs = new List<BreadcrumbItem>
+            {
+                new BreadcrumbItem { Text = "Home", Url = "/", IsActive = false },
+                new BreadcrumbItem { Text = "Parent Profile", Url = "/parent-profile", IsActive = true }
+            };
+            BreadcrumbTitle = "Parent Profile";
+        }
+
+        isLoading = false;
+    }
+
+    private void ToggleMobileMenu() => isMobileMenuOpen = !isMobileMenuOpen;
+    private void ToggleSubmenu(string menu) => activeMenu = activeMenu == menu ? null : menu;
+    private void ToggleUserDropdown() => showUserDropdown = !showUserDropdown;
+    private void NavigateTo(string uri) => NavigationManager.NavigateTo(uri);
+    private void SetActiveTab(string tab) { activeTab = tab; StateHasChanged(); }
+    private void NavigateToParentProfile() => NavigationManager.NavigateTo("/parent-profile");
+    private int CalculateAge(string? birthDateStr)
+    {
+        if (DateTime.TryParse(birthDateStr, out var birth))
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birth.Year;
+            if (birth > today.AddYears(-age)) age--;
+            return age;
+        }
+        return 38;
+    }
+    private async Task Logout()
+    {
+        NavigationManager.NavigateTo("/signout", forceLoad: true);
+    }
+
+    private void AddChild()
+    {
+        // Navigate to a child creation page or implement inline form
+        NavigationManager.NavigateTo("/add-child"); // Assuming there's an add-child page
+    }
+
+    private void EditChild(Guid childId)
+    {
+        // Navigate to child edit page with child ID
+        NavigationManager.NavigateTo($"/edit-child/{childId}");
+    }
+
+    private async Task DeleteChild(Guid childId)
+    {
+        if (userId.HasValue && await ParentProfileService.DeleteChildAsync(childId, userId.Value))
+        {
+            if (parentProfile?.Children != null)
+            {
+                parentProfile.Children = parentProfile.Children.Where(c => c.Id != childId).ToList();
+                StateHasChanged();
+            }
+        }
+    }
+
+    public class BreadcrumbItem
+    {
+        public string Text { get; set; } = "";
+        public string Url { get; set; } = "";
+        public bool IsActive { get; set; }
+    }
+    private void ViewHistory(Guid childId)
+{
+    NavigationManager.NavigateTo($"/parent-dashboard?childId={childId}&tab=MeasurementHistory");
+}
+
+}

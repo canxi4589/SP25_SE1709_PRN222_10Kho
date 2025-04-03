@@ -1,563 +1,525 @@
 ﻿@page "/"
+@using CCP.Repositori.Enums
+@using CCP.Repositori.ResultData
+@using CCP.Service.DTOs
 @using CCPProject.Components.Layout
+@using MudBlazor
 @layout Layout1
+@inject IDialogService DialogService
 <section class="section section-search">
-	<div class="container-fluid">
-		<div class="banner-wrapper">
-			<div class="banner-header text-center">
-				<h1>Measure your Children, Search Experts, Make an Appointment</h1>
-				<p>Discover the best Website to manage your child-growth, and easy to book Appointment</p>
-			</div>
+    <div class="container-fluid">
+        <div class="banner-wrapper">
+            <div class="banner-header text-center">
+                <h1>Measure your Children, Search Experts, Make an Appointment</h1>
+                <p>Discover the best Website to manage your child-growth, and easy to book Appointment</p>
+            </div>
 
-			@* <div class="search-box"> *@
-			@* 	<form action="templateshub.net"> *@
-			@* 		@* <div class="form-group search-location"> *@
-			@* 		@* 	<input type="text" class="form-control" placeholder="Search Location"> *@ 
-			@* 		@* 	<span class="form-text">Based on your Location</span> *@ 
-			@* 		@* </div> *@ 
-			@* 		<div class="form-group search-info"> *@
-			@* 			<input type="text" class="form-control" placeholder="Search Experts, Clinics, Hospitals, Diseases Etc"> *@
-			@* 			<span class="form-text">Ex : Dental or Sugar Check up etc</span> *@
-			@* 		</div> *@
-			@* 		<button type="submit" class="btn btn-primary search-btn"><i class="fas fa-search"></i> <span>Search</span></button> *@
-			@* 	</form> *@
-			@* </div> *@
-		</div>
-	</div>
+            @* <div class="search-box"> *@
+            @* 	<form action="templateshub.net"> *@
+            @* 		@* <div class="form-group search-location"> *@
+            @* 		@* 	<input type="text" class="form-control" placeholder="Search Location"> *@ 
+            @* 		@* 	<span class="form-text">Based on your Location</span> *@ 
+            @* 		@* </div> *@ 
+            @* 		<div class="form-group search-info"> *@
+            @* 			<input type="text" class="form-control" placeholder="Search Experts, Clinics, Hospitals, Diseases Etc"> *@
+            @* 			<span class="form-text">Ex : Dental or Sugar Check up etc</span> *@
+            @* 		</div> *@
+            @* 		<button type="submit" class="btn btn-primary search-btn"><i class="fas fa-search"></i> <span>Search</span></button> *@
+            @* 	</form> *@
+            @* </div> *@
+        </div>
+    </div>
+</section>
+<section class="section section-doctor">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="d-flex">
+                <div class="form-container p-4 shadow-lg rounded-4 bg-light">
+                    <h3 class="text-center mb-4 fw-bold text-primary">Guest Measurement Form</h3>
+
+                    <EditForm EditContext="@editContext" OnValidSubmit="@HandleValidSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-3" />
+
+                        <div class="mb-3">
+                            <label for="gender" class="form-label fw-semibold">Gender</label>
+                            <InputSelect id="gender" class="form-select rounded-3" @bind-Value="guestMeasurement.Gender">
+                                <option value="">Select Gender</option>
+                                <option value="@Gender.Male">Male</option>
+                                <option value="@Gender.Female">Female</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => guestMeasurement.Gender)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="height" class="form-label fw-semibold">Height (cm)</label>
+                            <InputNumber id="height" class="form-control rounded-3" @bind-Value="guestMeasurement.Height" min="40" max="180" />
+                            <ValidationMessage For="@(() => guestMeasurement.Height)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="weight" class="form-label fw-semibold">Weight (kg)</label>
+                            <InputNumber id="weight" class="form-control rounded-3" @bind-Value="guestMeasurement.Weight" min="3" max="75" />
+                            <ValidationMessage For="@(() => guestMeasurement.Weight)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="headCircumference" class="form-label fw-semibold">Head Circumference (cm)</label>
+                            <InputNumber id="headCircumference" class="form-control rounded-3" @bind-Value="guestMeasurement.HeadCircumference" />
+                            <ValidationMessage For="@(() => guestMeasurement.HeadCircumference)" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="dateOfBirth" class="form-label fw-semibold">Date of Birth</label>
+                            <InputDate id="dateOfBirth" class="form-control rounded-3" @bind-Value="guestMeasurement.DateOfBirth"
+                                       Max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <ValidationMessage For="@(() => guestMeasurement.DateOfBirth)" />
+                        </div>
+
+                        <div class="d-flex gap-3 justify-content-center">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm px-4" disabled="@(!editContext?.Validate())">
+                                <i class="fas fa-check me-2"></i>Submit
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-lg rounded-pill shadow-sm px-4" @onclick="ResetForm">
+                                <i class="fas fa-undo me-2"></i>Reset
+                            </button>
+                        </div>
+                    </EditForm>
+
+                    @if (isSubmitted)
+                    {
+                        <div class="mt-4 p-3 bg-white shadow-lg rounded-4 border border-success">
+                            <h4 class="text-center fw-bold text-success mb-3">Measurement Results</h4>
+                            <table class="table table-bordered table-hover rounded-3 overflow-hidden">
+                                <tbody>
+                                    <tr class="highlight-row">
+                                        <td class="fw-semibold text-muted">Gender</td>
+                                        <td class="text-primary">@guestMeasurement.Gender</td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td class="fw-semibold text-muted">Height</td>
+                                        <td class="text-primary">@guestMeasurement.Height cm</td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td class="fw-semibold text-muted">Weight</td>
+                                        <td class="text-primary">@guestMeasurement.Weight kg</td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td class="fw-semibold text-muted">Head Circumference</td>
+                                        <td class="text-primary">@guestMeasurement.HeadCircumference cm</td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td class="fw-semibold text-muted">Date of Birth</td>
+                                        <td class="text-primary">@guestMeasurement.DateOfBirth.ToShortDateString()</td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td class="fw-semibold text-muted">Age in Years</td>
+                                        <td class="text-primary">@CalculateAgeInYears(guestMeasurement.DateOfBirth)</td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td class="fw-semibold text-muted">BMI</td>
+                                        <td class="text-primary">@bmi.ToString("F2")</td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td class="fw-semibold text-muted">BMI Rating</td>
+                                        <td class="text-danger fw-bold">@bmiRating</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+                <div class="chart-container p-4 shadow-lg rounded-4 bg-light">
+                    @if (showChart)
+                    {
+                        <div class="chart-card mb-4">
+                            <h5 class="text-center fw-bold text-primary mb-3">Height Chart</h5>
+                            <MudChart ChartType="ChartType.Line"
+                                      ChartSeries="@HeightSeries"
+                                      XAxisLabels="@XAxisLabels"
+                                      Width="100%"
+                                      Height="350px"
+                                      ChartOptions="options"
+                                      class="shadow-sm rounded-3">
+                            </MudChart>
+                        </div>
+                        <div class="chart-card">
+                            <h5 class="text-center fw-bold text-primary mb-3">Weight Chart</h5>
+                            <MudChart ChartType="ChartType.Line"
+                                      ChartSeries="@WeightSeries"
+                                      XAxisLabels="@XAxisLabels"
+                                      Width="100%"
+                                      Height="350px"
+                                      ChartOptions="options"
+                                      class="shadow-sm rounded-3">
+                            </MudChart>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 <!-- /Home Banner -->
 <!-- Clinic and Specialities -->
 <section class="section section-specialities">
-	<div class="container-fluid">
-		<div class="section-header text-center">
-			<h2>Experts Specialities</h2>
-		</div>
-		<div class="row justify-content-center">
-			<div class="col-md-9">
-				<!-- Slider -->
-				<div class="specialities-slider slider">
+    <div class="container-fluid">
+        <div class="section-header text-center">
+            <h2>Experts Specialities</h2>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-9">
+                <!-- Slider -->
+                <div class="specialities-slider slider">
 
-					<!-- Slider Item -->
-					<div class="speicality-item text-center">
-						<div class="speicality-img">
-							<img src="assets/img/specialities/specialities-01.png" class="img-fluid" alt="Speciality">
-							<span><i class="fa fa-circle" aria-hidden="true"></i></span>
-						</div>
-						<p>BMI</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="speicality-item text-center">
-						<div class="speicality-img">
-							<img src="assets/img/specialities/specialities-02.png" class="img-fluid" alt="Speciality">
-							<span><i class="fa fa-circle" aria-hidden="true"></i></span>
-						</div>
-						<p>Height</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="speicality-item text-center">
-						<div class="speicality-img">
-							<img src="assets/img/specialities/specialities-03.png" class="img-fluid" alt="Speciality">
-							<span><i class="fa fa-circle" aria-hidden="true"></i></span>
-						</div>
-						<p>Weight</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="speicality-item text-center">
-						<div class="speicality-img">
-							<img src="assets/img/specialities/specialities-04.png" class="img-fluid" alt="Speciality">
-							<span><i class="fa fa-circle" aria-hidden="true"></i></span>
-						</div>
-						<p>Head Circumference</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="speicality-item text-center">
-						<div class="speicality-img">
-							<img src="assets/img/specialities/specialities-05.png" class="img-fluid" alt="Speciality">
-							<span><i class="fa fa-circle" aria-hidden="true"></i></span>
-						</div>
-						<p>Nutrition</p>
-					</div>
-					<div class="speicality-item text-center">
-						<div class="speicality-img">
-							<img src="assets/img/specialities/specialities-03.png" class="img-fluid" alt="Speciality">
-							<span><i class="fa fa-circle" aria-hidden="true"></i></span>
-						</div>
-						<p>Physical Activities</p>
-					</div>
-					<div class="speicality-item text-center">
-						<div class="speicality-img">
-							<img src="assets/img/specialities/specialities-04.png" class="img-fluid" alt="Speciality">
-							<span><i class="fa fa-circle" aria-hidden="true"></i></span>
-						</div>
-						<p>Sleep Pattern</p>
-					</div>
-					<!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="speicality-item text-center">
+                        <div class="speicality-img">
+                            <img src="assets/img/specialities/specialities-01.png" class="img-fluid" alt="Speciality">
+                            <span><i class="fa fa-circle" aria-hidden="true"></i></span>
+                        </div>
+                        <p>BMI</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="speicality-item text-center">
+                        <div class="speicality-img">
+                            <img src="assets/img/specialities/specialities-02.png" class="img-fluid" alt="Speciality">
+                            <span><i class="fa fa-circle" aria-hidden="true"></i></span>
+                        </div>
+                        <p>Height</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="speicality-item text-center">
+                        <div class="speicality-img">
+                            <img src="assets/img/specialities/specialities-03.png" class="img-fluid" alt="Speciality">
+                            <span><i class="fa fa-circle" aria-hidden="true"></i></span>
+                        </div>
+                        <p>Weight</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="speicality-item text-center">
+                        <div class="speicality-img">
+                            <img src="assets/img/specialities/specialities-04.png" class="img-fluid" alt="Speciality">
+                            <span><i class="fa fa-circle" aria-hidden="true"></i></span>
+                        </div>
+                        <p>Head Circumference</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="speicality-item text-center">
+                        <div class="speicality-img">
+                            <img src="assets/img/specialities/specialities-05.png" class="img-fluid" alt="Speciality">
+                            <span><i class="fa fa-circle" aria-hidden="true"></i></span>
+                        </div>
+                        <p>Nutrition</p>
+                    </div>
+                    <div class="speicality-item text-center">
+                        <div class="speicality-img">
+                            <img src="assets/img/specialities/specialities-03.png" class="img-fluid" alt="Speciality">
+                            <span><i class="fa fa-circle" aria-hidden="true"></i></span>
+                        </div>
+                        <p>Physical Activities</p>
+                    </div>
+                    <div class="speicality-item text-center">
+                        <div class="speicality-img">
+                            <img src="assets/img/specialities/specialities-04.png" class="img-fluid" alt="Speciality">
+                            <span><i class="fa fa-circle" aria-hidden="true"></i></span>
+                        </div>
+                        <p>Sleep Pattern</p>
+                    </div>
+                    <!-- /Slider Item -->
 
-				</div>
-				<!-- /Slider -->
+                </div>
+                <!-- /Slider -->
 
-			</div>
-		</div>
-	</div>
-</section>
-<!-- Clinic and Specialities -->
-<!-- Popular Section -->
-<section class="section section-doctor">
-	<div class="container-fluid">
-		<div class="row">
-			<div class="col-lg-4">
-				<div class="section-header ">
-					<h2>Book Our Expert</h2>
-					<p>We have the best doctor offer</p>
-				</div>
-				<div class="about-content">
-					<p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum.</p>
-					<p>web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes</p>
-					<a href="javascript:;">Read More..</a>
-				</div>
-			</div>
-			<div class="col-lg-8">
-				<div class="doctor-slider slider">
-
-					<!-- Doctor Widget -->
-					<div class="profile-widget">
-						<div class="doc-img">
-							<a href="doctor-profile.html">
-								<img class="img-fluid" alt="User Image" src="assets/img/doctors/doctor-01.jpg">
-							</a>
-							<a href="javascript:void(0)" class="fav-btn">
-								<i class="far fa-bookmark"></i>
-							</a>
-						</div>
-						<div class="pro-content">
-							<h3 class="title">
-								<a href="doctor-profile.html">Ruby Perrin</a>
-								<i class="fas fa-check-circle verified"></i>
-							</h3>
-							<p class="speciality">MDS - Periodontology and Oral Implantology, BDS</p>
-							<div class="rating">
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<span class="d-inline-block average-rating">(17)</span>
-							</div>
-							<ul class="available-info">
-								<li>
-									<i class="fas fa-map-marker-alt"></i> Florida, USA
-								</li>
-								<li>
-									<i class="far fa-clock"></i> Available on Fri, 22 Mar
-								</li>
-								<li>
-									<i class="far fa-money-bill-alt"></i> $300 - $1000
-									<i class="fas fa-info-circle" data-toggle="tooltip" title="Lorem Ipsum"></i>
-								</li>
-							</ul>
-							<div class="row row-sm">
-								<div class="col-6">
-									<a href="doctor-profile.html" class="btn view-btn">View Profile</a>
-								</div>
-								<div class="col-6">
-									<a href="booking.html" class="btn book-btn">Book Now</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<!-- /Doctor Widget -->
-					<!-- Doctor Widget -->
-					<div class="profile-widget">
-						<div class="doc-img">
-							<a href="doctor-profile.html">
-								<img class="img-fluid" alt="User Image" src="assets/img/doctors/doctor-02.jpg">
-							</a>
-							<a href="javascript:void(0)" class="fav-btn">
-								<i class="far fa-bookmark"></i>
-							</a>
-						</div>
-						<div class="pro-content">
-							<h3 class="title">
-								<a href="doctor-profile.html">Darren Elder</a>
-								<i class="fas fa-check-circle verified"></i>
-							</h3>
-							<p class="speciality">BDS, MDS - Oral & Maxillofacial Surgery</p>
-							<div class="rating">
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star"></i>
-								<span class="d-inline-block average-rating">(35)</span>
-							</div>
-							<ul class="available-info">
-								<li>
-									<i class="fas fa-map-marker-alt"></i> Newyork, USA
-								</li>
-								<li>
-									<i class="far fa-clock"></i> Available on Fri, 22 Mar
-								</li>
-								<li>
-									<i class="far fa-money-bill-alt"></i> $50 - $300
-									<i class="fas fa-info-circle" data-toggle="tooltip" title="Lorem Ipsum"></i>
-								</li>
-							</ul>
-							<div class="row row-sm">
-								<div class="col-6">
-									<a href="doctor-profile.html" class="btn view-btn">View Profile</a>
-								</div>
-								<div class="col-6">
-									<a href="booking.html" class="btn book-btn">Book Now</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<!-- /Doctor Widget -->
-					<!-- Doctor Widget -->
-					<div class="profile-widget">
-						<div class="doc-img">
-							<a href="doctor-profile.html">
-								<img class="img-fluid" alt="User Image" src="assets/img/doctors/doctor-03.jpg">
-							</a>
-							<a href="javascript:void(0)" class="fav-btn">
-								<i class="far fa-bookmark"></i>
-							</a>
-						</div>
-						<div class="pro-content">
-							<h3 class="title">
-								<a href="doctor-profile.html">Deborah Angel</a>
-								<i class="fas fa-check-circle verified"></i>
-							</h3>
-							<p class="speciality">MBBS, MD - General Medicine, DNB - Cardiology</p>
-							<div class="rating">
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star"></i>
-								<span class="d-inline-block average-rating">(27)</span>
-							</div>
-							<ul class="available-info">
-								<li>
-									<i class="fas fa-map-marker-alt"></i> Georgia, USA
-								</li>
-								<li>
-									<i class="far fa-clock"></i> Available on Fri, 22 Mar
-								</li>
-								<li>
-									<i class="far fa-money-bill-alt"></i> $100 - $400
-									<i class="fas fa-info-circle" data-toggle="tooltip" title="Lorem Ipsum"></i>
-								</li>
-							</ul>
-							<div class="row row-sm">
-								<div class="col-6">
-									<a href="doctor-profile.html" class="btn view-btn">View Profile</a>
-								</div>
-								<div class="col-6">
-									<a href="booking.html" class="btn book-btn">Book Now</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<!-- /Doctor Widget -->
-					<!-- Doctor Widget -->
-					<div class="profile-widget">
-						<div class="doc-img">
-							<a href="doctor-profile.html">
-								<img class="img-fluid" alt="User Image" src="assets/img/doctors/doctor-04.jpg">
-							</a>
-							<a href="javascript:void(0)" class="fav-btn">
-								<i class="far fa-bookmark"></i>
-							</a>
-						</div>
-						<div class="pro-content">
-							<h3 class="title">
-								<a href="doctor-profile.html">Sofia Brient</a>
-								<i class="fas fa-check-circle verified"></i>
-							</h3>
-							<p class="speciality">MBBS, MS - General Surgery, MCh - Urology</p>
-							<div class="rating">
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star"></i>
-								<span class="d-inline-block average-rating">(4)</span>
-							</div>
-							<ul class="available-info">
-								<li>
-									<i class="fas fa-map-marker-alt"></i> Louisiana, USA
-								</li>
-								<li>
-									<i class="far fa-clock"></i> Available on Fri, 22 Mar
-								</li>
-								<li>
-									<i class="far fa-money-bill-alt"></i> $150 - $250
-									<i class="fas fa-info-circle" data-toggle="tooltip" title="Lorem Ipsum"></i>
-								</li>
-							</ul>
-							<div class="row row-sm">
-								<div class="col-6">
-									<a href="doctor-profile.html" class="btn view-btn">View Profile</a>
-								</div>
-								<div class="col-6">
-									<a href="booking.html" class="btn book-btn">Book Now</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<!-- /Doctor Widget -->
-					<!-- Doctor Widget -->
-					<div class="profile-widget">
-						<div class="doc-img">
-							<a href="doctor-profile.html">
-								<img class="img-fluid" alt="User Image" src="assets/img/doctors/doctor-05.jpg">
-							</a>
-							<a href="javascript:void(0)" class="fav-btn">
-								<i class="far fa-bookmark"></i>
-							</a>
-						</div>
-						<div class="pro-content">
-							<h3 class="title">
-								<a href="doctor-profile.html">Marvin Campbell</a>
-								<i class="fas fa-check-circle verified"></i>
-							</h3>
-							<p class="speciality">MBBS, MD - Ophthalmology, DNB - Ophthalmology</p>
-							<div class="rating">
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star"></i>
-								<span class="d-inline-block average-rating">(66)</span>
-							</div>
-							<ul class="available-info">
-								<li>
-									<i class="fas fa-map-marker-alt"></i> Michigan, USA
-								</li>
-								<li>
-									<i class="far fa-clock"></i> Available on Fri, 22 Mar
-								</li>
-								<li>
-									<i class="far fa-money-bill-alt"></i> $50 - $700
-									<i class="fas fa-info-circle" data-toggle="tooltip" title="Lorem Ipsum"></i>
-								</li>
-							</ul>
-							<div class="row row-sm">
-								<div class="col-6">
-									<a href="doctor-profile.html" class="btn view-btn">View Profile</a>
-								</div>
-								<div class="col-6">
-									<a href="booking.html" class="btn book-btn">Book Now</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<!-- /Doctor Widget -->
-					<!-- Doctor Widget -->
-					<div class="profile-widget">
-						<div class="doc-img">
-							<a href="doctor-profile.html">
-								<img class="img-fluid" alt="User Image" src="assets/img/doctors/doctor-06.jpg">
-							</a>
-							<a href="javascript:void(0)" class="fav-btn">
-								<i class="far fa-bookmark"></i>
-							</a>
-						</div>
-						<div class="pro-content">
-							<h3 class="title">
-								<a href="doctor-profile.html">Katharine Berthold</a>
-								<i class="fas fa-check-circle verified"></i>
-							</h3>
-							<p class="speciality">MS - Orthopaedics, MBBS, M.Ch - Orthopaedics</p>
-							<div class="rating">
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star"></i>
-								<span class="d-inline-block average-rating">(52)</span>
-							</div>
-							<ul class="available-info">
-								<li>
-									<i class="fas fa-map-marker-alt"></i> Texas, USA
-								</li>
-								<li>
-									<i class="far fa-clock"></i> Available on Fri, 22 Mar
-								</li>
-								<li>
-									<i class="far fa-money-bill-alt"></i> $100 - $500
-									<i class="fas fa-info-circle" data-toggle="tooltip" title="Lorem Ipsum"></i>
-								</li>
-							</ul>
-							<div class="row row-sm">
-								<div class="col-6">
-									<a href="doctor-profile.html" class="btn view-btn">View Profile</a>
-								</div>
-								<div class="col-6">
-									<a href="booking.html" class="btn book-btn">Book Now</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<!-- /Doctor Widget -->
-					<!-- Doctor Widget -->
-					<div class="profile-widget">
-						<div class="doc-img">
-							<a href="doctor-profile.html">
-								<img class="img-fluid" alt="User Image" src="assets/img/doctors/doctor-07.jpg">
-							</a>
-							<a href="javascript:void(0)" class="fav-btn">
-								<i class="far fa-bookmark"></i>
-							</a>
-						</div>
-						<div class="pro-content">
-							<h3 class="title">
-								<a href="doctor-profile.html">Linda Tobin</a>
-								<i class="fas fa-check-circle verified"></i>
-							</h3>
-							<p class="speciality">MBBS, MD - General Medicine, DM - Neurology</p>
-							<div class="rating">
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star"></i>
-								<span class="d-inline-block average-rating">(43)</span>
-							</div>
-							<ul class="available-info">
-								<li>
-									<i class="fas fa-map-marker-alt"></i> Kansas, USA
-								</li>
-								<li>
-									<i class="far fa-clock"></i> Available on Fri, 22 Mar
-								</li>
-								<li>
-									<i class="far fa-money-bill-alt"></i> $100 - $1000
-									<i class="fas fa-info-circle" data-toggle="tooltip" title="Lorem Ipsum"></i>
-								</li>
-							</ul>
-							<div class="row row-sm">
-								<div class="col-6">
-									<a href="doctor-profile.html" class="btn view-btn">View Profile</a>
-								</div>
-								<div class="col-6">
-									<a href="booking.html" class="btn book-btn">Book Now</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<!-- /Doctor Widget -->
-					<!-- Doctor Widget -->
-					<div class="profile-widget">
-						<div class="doc-img">
-							<a href="doctor-profile.html">
-								<img class="img-fluid" alt="User Image" src="assets/img/doctors/doctor-08.jpg">
-							</a>
-							<a href="javascript:void(0)" class="fav-btn">
-								<i class="far fa-bookmark"></i>
-							</a>
-						</div>
-						<div class="pro-content">
-							<h3 class="title">
-								<a href="doctor-profile.html">Paul Richard</a>
-								<i class="fas fa-check-circle verified"></i>
-							</h3>
-							<p class="speciality">MBBS, MD - Dermatology , Venereology & Lepros</p>
-							<div class="rating">
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star filled"></i>
-								<i class="fas fa-star"></i>
-								<span class="d-inline-block average-rating">(49)</span>
-							</div>
-							<ul class="available-info">
-								<li>
-									<i class="fas fa-map-marker-alt"></i> California, USA
-								</li>
-								<li>
-									<i class="far fa-clock"></i> Available on Fri, 22 Mar
-								</li>
-								<li>
-									<i class="far fa-money-bill-alt"></i> $100 - $400
-									<i class="fas fa-info-circle" data-toggle="tooltip" title="Lorem Ipsum"></i>
-								</li>
-							</ul>
-							<div class="row row-sm">
-								<div class="col-6">
-									<a href="doctor-profile.html" class="btn view-btn">View Profile</a>
-								</div>
-								<div class="col-6">
-									<a href="booking.html" class="btn book-btn">Book Now</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<!-- Doctor Widget -->
-
-				</div>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 </section>
 <!-- /Popular Section -->
 <!-- Availabe Features -->
 <section class="section section-features">
-	<div class="container-fluid">
-		<div class="row">
-			<div class="col-md-5 features-img">
-				<img src="assets/img/features/feature.png" class="img-fluid" alt="Feature">
-			</div>
-			<div class="col-md-7">
-				<div class="section-header">
-					<h2 class="mt-2">Availabe Features in Our Clinic</h2>
-					<p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. </p>
-				</div>
-				<div class="features-slider slider">
-					<!-- Slider Item -->
-					<div class="feature-item text-center">
-						<img src="assets/img/features/feature-01.jpg" class="img-fluid" alt="Feature">
-						<p>Patient Ward</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="feature-item text-center">
-						<img src="assets/img/features/feature-02.jpg" class="img-fluid" alt="Feature">
-						<p>Test Room</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="feature-item text-center">
-						<img src="assets/img/features/feature-03.jpg" class="img-fluid" alt="Feature">
-						<p>ICU</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="feature-item text-center">
-						<img src="assets/img/features/feature-04.jpg" class="img-fluid" alt="Feature">
-						<p>Laboratory</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="feature-item text-center">
-						<img src="assets/img/features/feature-05.jpg" class="img-fluid" alt="Feature">
-						<p>Operation</p>
-					</div>
-					<!-- /Slider Item -->
-					<!-- Slider Item -->
-					<div class="feature-item text-center">
-						<img src="assets/img/features/feature-06.jpg" class="img-fluid" alt="Feature">
-						<p>Medical</p>
-					</div>
-					<!-- /Slider Item -->
-				</div>
-			</div>
-		</div>
-	</div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-5 features-img">
+                <img src="assets/img/features/feature.png" class="img-fluid" alt="Feature">
+            </div>
+            <div class="col-md-7">
+                <div class="section-header">
+                    <h2 class="mt-2">Availabe Features in Our Clinic</h2>
+                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. </p>
+                </div>
+                <div class="features-slider slider">
+                    <!-- Slider Item -->
+                    <div class="feature-item text-center">
+                        <img src="assets/img/features/feature-01.jpg" class="img-fluid" alt="Feature">
+                        <p>Patient Ward</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="feature-item text-center">
+                        <img src="assets/img/features/feature-02.jpg" class="img-fluid" alt="Feature">
+                        <p>Test Room</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="feature-item text-center">
+                        <img src="assets/img/features/feature-03.jpg" class="img-fluid" alt="Feature">
+                        <p>ICU</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="feature-item text-center">
+                        <img src="assets/img/features/feature-04.jpg" class="img-fluid" alt="Feature">
+                        <p>Laboratory</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="feature-item text-center">
+                        <img src="assets/img/features/feature-05.jpg" class="img-fluid" alt="Feature">
+                        <p>Operation</p>
+                    </div>
+                    <!-- /Slider Item -->
+                    <!-- Slider Item -->
+                    <div class="feature-item text-center">
+                        <img src="assets/img/features/feature-06.jpg" class="img-fluid" alt="Feature">
+                        <p>Medical</p>
+                    </div>
+                    <!-- /Slider Item -->
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 <!-- Availabe Features -->
+@code {
+    private GuestMeasurementInputDto guestMeasurement = new GuestMeasurementInputDto();
+    private EditContext? editContext;
+    private bool isSubmitted = false;
+    private bool showChart = false;
+    private ChartOptions options = new ChartOptions();
+    public List<ChartSeries> HeightSeries = new List<ChartSeries>();
+    public List<ChartSeries> WeightSeries = new List<ChartSeries>();
+    public string[] XAxisLabels = Array.Empty<string>();
+    private double bmi;
+    private BmiRating bmiRating;
+    private double minHeight;
+    private double maxHeight;
+    private DateTime minDate = DateTime.Today.AddYears(-20);
+
+    protected override void OnInitialized()
+    {
+        // Initialize guestMeasurement with empty/default values
+        guestMeasurement = new GuestMeasurementInputDto
+            {
+                Gender = Gender.Male,
+                Height = 0,
+                Weight = 0,
+                HeadCircumference = 0,
+                DateOfBirth = DateTime.MinValue
+            };
+        editContext = new EditContext(guestMeasurement);
+
+        options.InterpolationOption = InterpolationOption.NaturalSpline;
+        options.YAxisFormat = "F0";
+        XAxisLabels = MeasurementStandards.MaleHeightStandard.Keys.Select(k => k.ToString()).ToArray();
+
+        minHeight = Math.Min(
+            MeasurementStandards.MaleHeightStandard.Values.Min(),
+            MeasurementStandards.FemaleHeightStandard.Values.Min());
+        maxHeight = Math.Max(
+            MeasurementStandards.MaleHeightStandard.Values.Max(),
+            MeasurementStandards.FemaleHeightStandard.Values.Max());
+
+        // Subscribe to field changes to update button state
+        editContext.OnFieldChanged += (sender, e) => StateHasChanged();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (editContext == null || !editContext.Validate()) return;
+
+        isSubmitted = true;
+        showChart = true;
+
+        bmi = CalculateBmi(guestMeasurement.Weight, guestMeasurement.Height);
+        bmiRating = MeasurementStandards.GetBmiRating((float)bmi);
+
+        int age = CalculateAgeInYears(guestMeasurement.DateOfBirth);
+
+        // Create arrays for the user's data with a single point
+        double[] heightData = new double[XAxisLabels.Length];
+        double[] weightData = new double[XAxisLabels.Length];
+        Array.Fill(heightData, 0); // Use 0 instead of NaN to ensure chart renders
+        Array.Fill(weightData, 0);
+
+        // Set the user's height and weight at their age index
+        if (age >= 1 && age <= 20) // Ensure age is within the chart range
+        {
+            int index = age - 1; // Adjust for 0-based array index
+            heightData[index] = guestMeasurement.Height;
+            weightData[index] = guestMeasurement.Weight;
+        }
+
+        // Clear previous series to avoid duplication
+        HeightSeries.Clear();
+        WeightSeries.Clear();
+
+        if (guestMeasurement.Gender == Gender.Male)
+        {
+            HeightSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Male Height Standard", Data = MeasurementStandards.MaleHeightStandard.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Male Height OverHeight", Data = MeasurementStandards.MaleOverHeight.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Male Height UnderHeight", Data = MeasurementStandards.MaleUnderHeight.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Your Height", Data = heightData } // User's height point
+            };
+            WeightSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Male Weight Standard", Data = MeasurementStandards.MaleWeightStandard.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Male Weight OverWeight", Data = MeasurementStandards.MaleOverWeight.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Male Weight UnderWeight", Data = MeasurementStandards.MaleUnderWeight.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Your Weight", Data = weightData } // User's weight point
+            };
+        }
+        else if (guestMeasurement.Gender == Gender.Female)
+        {
+            HeightSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Female Height Standard", Data = MeasurementStandards.FemaleHeightStandard.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Female Height OverHeight", Data = MeasurementStandards.FemaleOverHeight.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Female Height UnderHeight", Data = MeasurementStandards.FemaleUnderHeight.Values.Select(h => (double)h).ToArray() },
+                new ChartSeries { Name = "Your Height", Data = heightData } // User's height point
+            };
+            WeightSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Female Weight Standard", Data = MeasurementStandards.FemaleWeightStandard.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Female Weight OverWeight", Data = MeasurementStandards.FemaleOverWeight.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Female Weight UnderWeight", Data = MeasurementStandards.FemaleUnderWeight.Values.Select(w => (double)w).ToArray() },
+                new ChartSeries { Name = "Your Weight", Data = weightData } // User's weight point
+            };
+        }
+
+        await DialogService.ShowMessageBox("Form Submitted", "The guest measurement data has been submitted successfully.");
+        StateHasChanged();
+    }
+
+    private double CalculateBmi(float weight, float heightCm)
+    {
+        double heightM = heightCm / 100.0;
+        if (heightM <= 0) return 0; // Avoid division by zero
+        return weight / (heightM * heightM);
+    }
+
+    private int CalculateAgeInYears(DateTime dateOfBirth)
+    {
+        var today = DateTime.Today;
+        int years = today.Year - dateOfBirth.Year;
+        if (dateOfBirth.Date > today.AddYears(-years)) years--;
+        return years >= 0 ? years : 0;
+    }
+
+    private void ResetForm()
+    {
+        guestMeasurement = new GuestMeasurementInputDto
+            {
+                Gender = Gender.Male,
+                Height = 0,
+                Weight = 0,
+                HeadCircumference = 0,
+                DateOfBirth = DateTime.MinValue
+            };
+        editContext = new EditContext(guestMeasurement);
+        editContext.OnFieldChanged += (sender, e) => StateHasChanged(); // Re-subscribe
+        isSubmitted = false;
+        showChart = false;
+        bmi = 0;
+        bmiRating = default;
+        HeightSeries.Clear();
+        WeightSeries.Clear();
+        StateHasChanged();
+    }
+}
+
+<style>
+    .form-container {
+        width: 30%;
+    }
+
+    .chart-container {
+        width: 70%;
+    }
+
+    .section-doctor {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 40px 0;
+    }
+
+    .form-container, .chart-container {
+        border-radius: 20px !important;
+        transition: all 0.3s ease;
+    }
+
+        .form-container:hover, .chart-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+        }
+
+    .form-control, .form-select {
+        border: 2px solid #ced4da;
+        transition: border-color 0.3s ease;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+    .btn-primary {
+        background: linear-gradient(45deg, #007bff, #00c4ff);
+        border: none;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(45deg, #6c757d, #adb5bd);
+        border: none;
+    }
+
+    .btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .table {
+        background: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .table td {
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+
+    .highlight-row:hover {
+        background: #f1faff;
+        transition: background 0.3s ease;
+    }
+
+    .table-bordered {
+        border: 2px solid #dee2e6 !important;
+    }
+
+        .table-bordered td {
+            border: 1px solid #dee2e6 !important;
+        }
+
+    .chart-card {
+        background: #fff;
+        padding: 15px;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
