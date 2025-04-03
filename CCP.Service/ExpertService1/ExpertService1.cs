@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -76,6 +77,20 @@ namespace CCP.Services
             return childs;
 
                 }
+        public async Task<List<Measurement>> GetChildMeasurements(Guid childId)
+        {
+            var list = _unitOfWork.Repository<Measurement>().GetAll().Where(m => m.ChildId == childId);
+
+            return list.ToList();
+        }
+
+        public async Task<Measurement> AddMeasurement(Measurement measurement)
+        {
+            await _unitOfWork.Repository<Measurement>().AddAsync(measurement);
+            await _unitOfWork.SaveChangesAsync();
+            return measurement;
+        }
+
         private void SeedInitialAvailabilityData()
         {
             var availabilityRepo = _unitOfWork.Repository<ExpertAvailability>();

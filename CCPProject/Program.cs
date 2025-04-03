@@ -1,6 +1,7 @@
 using CCP.Repositori.Repository;
 using CCP.Service;
 using CCP.Service.EmailService;
+using CCP.Service.Vnpay;
 using CCP.Services;
 using CCPProject.Components;
 using CCPProject.Extension;
@@ -24,7 +25,7 @@ builder.Services.AddScoped<IExpertService1,ExpertService1>();
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
 builder.Services.AddHttpContextAccessor();
-
+builder.Services.AddScoped<Ivnpay,VnPay>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

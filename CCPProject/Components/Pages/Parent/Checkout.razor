@@ -1,5 +1,6 @@
 ﻿@page "/checkout/{UserId}/{BookingDateTime}"
 @using CCP.Repositori.Entities
+@using CCP.Service.Vnpay
 @using CCP.Services
 @using CCPProject.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
@@ -10,6 +11,7 @@
 @inject IExpertService1 ExpertService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject Ivnpay vnpay
 
 <div class="content">
     <div class="container">
@@ -72,7 +74,7 @@
                                         <h4 class="card-title">Additional Information (@expert.Specialty.Name)</h4>
                                         @switch (expert.Specialty.Name?.ToLower())
                                         {
-                                            case "pediatrics":
+                                            case "endocrinology":
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-group">
@@ -86,6 +88,35 @@
                                                             <InputTextArea class="form-control" @bind-Value="appointmentModel.AdditionalInfo.Medications" />
                                                         </div>
                                                     </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Measurement Records</label>
+                                                    <div class="input-group">
+                                                        <InputSelect class="form-control" @bind-Value="appointmentModel.AdditionalInfo.SelectedMeasurementId">
+                                                            <option value="">Select a measurement record (optional)</option>
+                                                            @if (measurements != null && measurements.Any())
+                                                            {
+                                                                @foreach (var measurement in measurements)
+                                                                {
+                                                                    <option value="@measurement.Id.ToString()">
+                                                                        Height: @measurement.Height cm, Weight: @measurement.Weight kg
+                                                                        @if (measurement.HeadCircumference.HasValue)
+                                                                        {
+                                                                            <span>, Head: @measurement.HeadCircumference.Value cm</span>
+                                                                        }
+                                                                        (@measurement.RecordDate.ToString("dd MMM yyyy"))
+                                                                    </option>
+                                                                }
+                                                            }
+                                                        </InputSelect>
+                                                        <button type="button" class="btn btn-outline-primary" @onclick="ShowAddMeasurementModal">
+                                                            Add New Measurement
+                                                        </button>
+                                                    </div>
+                                                    @if (!measurements.Any())
+                                                    {
+                                                        <small class="form-text text-muted">No measurement records found. Add one if needed.</small>
+                                                    }
                                                 </div>
                                                 break;
                                             case "child nutrition":
@@ -376,6 +407,57 @@
     <div class="modal-backdrop fade show" @onclick="HideAddPhysicalActivityModal"></div>
 }
 
+<!-- Add Measurement Modal -->
+@if (showAddMeasurementModal)
+{
+    <div class="modal fade show" style="display:block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <EditForm Model="@newMeasurement" OnValidSubmit="HandleAddMeasurement">
+                    <DataAnnotationsValidator />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Measurement</h5>
+                        <button type="button" class="btn-close" @onclick="HideAddMeasurementModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Record Date</label>
+                            <InputDate class="form-control" @bind-Value="newMeasurement.RecordDate" />
+                            <ValidationMessage For="@(() => newMeasurement.RecordDate)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Height (cm)</label>
+                            <InputNumber class="form-control" @bind-Value="newMeasurement.Height" />
+                            <ValidationMessage For="@(() => newMeasurement.Height)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <InputNumber class="form-control" @bind-Value="newMeasurement.Weight" />
+                            <ValidationMessage For="@(() => newMeasurement.Weight)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Head Circumference (cm) - Optional</label>
+                            <InputNumber class="form-control" @bind-Value="newMeasurement.HeadCircumference" />
+                            <ValidationMessage For="@(() => newMeasurement.HeadCircumference)" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="HideAddMeasurementModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            }
+                            <span>Save Measurement</span>
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show" @onclick="HideAddMeasurementModal"></div>
+}
+
 @code {
     [Parameter] public string UserId { get; set; }
     [Parameter] public string BookingDateTime { get; set; }
@@ -392,6 +474,9 @@
     private List<PhysicalActivity> physicalActivities = new();
     private PhysicalActivity newPhysicalActivity = new();
     private bool showAddPhysicalActivityModal = false;
+    private List<Measurement> measurements = new();
+    private Measurement newMeasurement = new();
+    private bool showAddMeasurementModal = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -424,10 +509,17 @@
             appointmentModel.Email = currentUser.Email ?? "";
             appointmentModel.Phone = currentUser.PhoneNumber ?? "0366532672";
 
-            // If a child is pre-selected, load their physical activities
-            if (!string.IsNullOrEmpty(appointmentModel.SelectedChildId) && expert?.Specialty?.Name?.ToLower() == "child nutrition")
+            // If a child is pre-selected, load their data based on specialty
+            if (!string.IsNullOrEmpty(appointmentModel.SelectedChildId))
             {
-                physicalActivities = await ExpertService.GetChildPhysicalActivities(Guid.Parse(appointmentModel.SelectedChildId));
+                if (expert?.Specialty?.Name?.ToLower() == "child nutrition")
+                {
+                    physicalActivities = await ExpertService.GetChildPhysicalActivities(Guid.Parse(appointmentModel.SelectedChildId));
+                }
+                else if (expert?.Specialty?.Name?.ToLower() == "endocrinology")
+                {
+                    measurements = await ExpertService.GetChildMeasurements(Guid.Parse(appointmentModel.SelectedChildId));
+                }
             }
         }
         catch (Exception ex)
@@ -467,10 +559,14 @@
             children.Add(addedChild);
             appointmentModel.SelectedChildId = addedChild.Id.ToString();
 
-            // Load physical activities if it's a child nutrition expert
+            // Load specialty-specific data
             if (expert?.Specialty?.Name?.ToLower() == "child nutrition")
             {
                 physicalActivities = await ExpertService.GetChildPhysicalActivities(addedChild.Id);
+            }
+            else if (expert?.Specialty?.Name?.ToLower() == "endocrinology")
+            {
+                measurements = await ExpertService.GetChildMeasurements(addedChild.Id);
             }
 
             HideAddChildModal();
@@ -487,20 +583,33 @@
 
     private async Task OnChildSelected()
     {
-        if (!string.IsNullOrEmpty(appointmentModel.SelectedChildId) && expert?.Specialty?.Name?.ToLower() == "child nutrition")
+        if (!string.IsNullOrEmpty(appointmentModel.SelectedChildId))
         {
             try
             {
-                physicalActivities = await ExpertService.GetChildPhysicalActivities(Guid.Parse(appointmentModel.SelectedChildId));
+                if (expert?.Specialty?.Name?.ToLower() == "child nutrition")
+                {
+                    physicalActivities = await ExpertService.GetChildPhysicalActivities(Guid.Parse(appointmentModel.SelectedChildId));
+                }
+                else if (expert?.Specialty?.Name?.ToLower() == "endocrinology")
+                {
+                    measurements = await ExpertService.GetChildMeasurements(Guid.Parse(appointmentModel.SelectedChildId));
+                }
+                else
+                {
+                    physicalActivities = new List<PhysicalActivity>();
+                    measurements = new List<Measurement>();
+                }
             }
             catch (Exception ex)
             {
-                errorMessage = $"Failed to load physical activities: {ex.Message}";
+                errorMessage = $"Failed to load data: {ex.Message}";
             }
         }
         else
         {
             physicalActivities = new List<PhysicalActivity>();
+            measurements = new List<Measurement>();
         }
         StateHasChanged();
     }
@@ -550,6 +659,51 @@
         }
     }
 
+    private void ShowAddMeasurementModal()
+    {
+        if (string.IsNullOrEmpty(appointmentModel.SelectedChildId))
+        {
+            errorMessage = "Please select a child first";
+            return;
+        }
+
+        newMeasurement = new Measurement
+            {
+                ChildId = Guid.Parse(appointmentModel.SelectedChildId),
+                RecordDate = DateTime.Today
+            };
+        showAddMeasurementModal = true;
+    }
+
+    private void HideAddMeasurementModal()
+    {
+        showAddMeasurementModal = false;
+        newMeasurement = new Measurement();
+    }
+
+    private async Task HandleAddMeasurement()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            var addedMeasurement = await ExpertService.AddMeasurement(newMeasurement);
+            measurements.Add(addedMeasurement);
+            appointmentModel.AdditionalInfo.SelectedMeasurementId = addedMeasurement.Id.ToString();
+
+            HideAddMeasurementModal();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to add measurement: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
     private async Task HandleCheckout()
     {
         if (!appointmentModel.TermsAccepted || string.IsNullOrEmpty(appointmentModel.SelectedChildId)) return;
@@ -566,15 +720,24 @@
                     ExpertId = expert.Id,
                     StartTime = TimeSpan.FromTicks(bookingDateTime.Ticks - bookingDateTime.Date.Ticks),
                     EndTime = TimeSpan.FromTicks(bookingDateTime.Ticks - bookingDateTime.Date.Ticks).Add(TimeSpan.FromHours(1)),
-                    PhysicalActivityId = Guid.Parse(appointmentModel.AdditionalInfo.SelectedPhysicalActivityId),
+                    PhysicalActivityId = string.IsNullOrEmpty(appointmentModel.AdditionalInfo.SelectedPhysicalActivityId) ? null : Guid.Parse(appointmentModel.AdditionalInfo.SelectedPhysicalActivityId),
+                    MeasurementId = string.IsNullOrEmpty(appointmentModel.AdditionalInfo.SelectedMeasurementId) ? null : Guid.Parse(appointmentModel.AdditionalInfo.SelectedMeasurementId),
                     BookingDate = bookingDateTime.Date,
                     Price = expert.Price,
-                    Status = "Paid",
+                    Status = "Pending", // Set to "Pending" until payment is confirmed
                     Type = expert.Specialty?.Name,
                 };
 
             await ExpertService.BookAppointment(appointment);
-            NavigationManager.NavigateTo("/booking-success");
+            if (appointmentModel.PaymentMethod == "Vnpay")
+            {
+                string paymentUrl = await vnpay.CreatePaymentUrlAsync(appointment);
+                NavigationManager.NavigateTo(paymentUrl, forceLoad: true);
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/booking-success");
+            }
         }
         catch (Exception ex)
         {
@@ -593,7 +756,7 @@
         public string LastName { get; set; } = "";
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
-        public string PaymentMethod { get; set; } = "CreditCard";
+        public string PaymentMethod { get; set; } = "Vnpay"; // Default to Vnpay since it's the only option now
         public string CardName { get; set; } = "";
         public string CardNumber { get; set; } = "";
         public string ExpiryMonth { get; set; } = "";
@@ -611,5 +774,6 @@
         public string FoodAllergies { get; set; } = "";
         public string Notes { get; set; } = "";
         public string SelectedPhysicalActivityId { get; set; } = "";
+        public string SelectedMeasurementId { get; set; } = "";
     }
 }
