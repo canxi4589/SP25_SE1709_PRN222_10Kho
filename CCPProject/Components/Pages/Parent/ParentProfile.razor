@@ -1,13 +1,20 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@page "/parent-profile"
+@using CCPProject.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using CCP.Service
+@using CCP.Service.DTOs
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
+@inject IParentProfileService ParentProfileService
+@layout Layout1
+
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-<title>Doccure</title>
+<title>Doccure - Parent Profile</title>
 
 <!-- Favicons -->
 <link type="image/x-icon" href="assets/img/favicon.png" rel="icon">
@@ -23,187 +30,159 @@
 <link rel="stylesheet" href="assets/css/style.css">
 
 <div class="main-wrapper">
-    <!-- Header -->
-    <header class="header">
-        <nav class="navbar navbar-expand-lg header-nav">
-            <div class="navbar-header">
-                <a id="mobile_btn" href="javascript:void(0);" @onclick="ToggleMobileMenu">
-                    <span class="bar-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </span>
-                </a>
-                <a href="/" class="navbar-brand logo">
-                    <img src="assets/img/logo.png" class="img-fluid" alt="Logo" />
-                </a>
-            </div>
-            <div class="main-menu-wrapper @(isMobileMenuOpen ? "show" : "")">
-                <div class="menu-header">
-                    <a href="/" class="menu-logo">
-                        <img src="assets/img/logo.png" class="img-fluid" alt="Logo" />
-                    </a>
-                    <a id="menu_close" class="menu-close" href="javascript:void(0);" @onclick="ToggleMobileMenu">
-                        <i class="fas fa-times"></i>
-                    </a>
-                </div>
-                @if (userRole == "Expert")
-                {
-                    <ul class="main-nav">
-                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Home</a></li>
 
-                        @if (isAuthenticated)
-                        {
-                            <li><a @onclick="Logout" @onclick:preventDefault>Logout</a></li>
-                        }
-                        else
-                        {
-                            <li class="login-link"><a @onclick='() => NavigateTo("/login")' @onclick:preventDefault>Login / Signup</a></li>
-                        }
-                    </ul>
-                }
-                else if (userRole == "Parent")
-                {
-                    <ul class="main-nav">
-                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Home</a></li>
-                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Measure Your Child</a></li>
-                        <li><a @onclick='() => NavigateTo("/expert-list")' @onclick:preventDefault>Expert List</a></li>
-                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Blog</a></li>
-                        <li><a @onclick='() => NavigateTo("/faq")' @onclick:preventDefault>FAQ</a></li>
-
-
-                        @if (isAuthenticated)
-                        {
-                            <li><a @onclick="Logout" @onclick:preventDefault>Logout</a></li>
-                        }
-                        else
-                        {
-                            <li class="login-link"><a @onclick='() => NavigateTo("/login")' @onclick:preventDefault>Login / Signup</a></li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <ul class="main-nav">
-                        <li><a @onclick='() => NavigateTo("/")' @onclick:preventDefault>Home</a></li>
-                        <li class="has-submenu @(activeMenu == "Doctors" ? "active" : "")">
-                            <a @onclick='() => ToggleSubmenu("Doctors")' @onclick:preventDefault>Doctors <i class="fas fa-chevron-down"></i></a>
-                            @if (activeMenu == "Doctors")
-                            {
-                                <ul class="submenu show">
-                                    <li><a @onclick='() => NavigateTo("/doctor-dashboard")' @onclick:preventDefault>Doctor Dashboard</a></li>
-                                    <li><a @onclick='() => NavigateTo("/appointments")' @onclick:preventDefault>Appointments</a></li>
-                                    <li><a @onclick='() => NavigateTo("/my-patients")' @onclick:preventDefault>Patients List</a></li>
-                                </ul>
-                            }
-                        </li>
-                        <li class="has-submenu @(activeMenu == "Patients" ? "active" : "")">
-                            <a @onclick='() => ToggleSubmenu("Patients")' @onclick:preventDefault>Expert <i class="fas fa-chevron-down"></i></a>
-                            @if (activeMenu == "Patients")
-                            {
-                                <ul class="submenu show">
-                                    <li><a @onclick='() => NavigateTo("/search")' @onclick:preventDefault>Search Doctor</a></li>
-                                    <li><a @onclick='() => NavigateTo("/expert-list")' @onclick:preventDefault>Doctor Profile</a></li>
-                                    <li><a @onclick='() => NavigateTo("/booking")' @onclick:preventDefault>Booking</a></li>
-                                    <li><a @onclick='() => NavigateTo("/parent-dashboard")' @onclick:preventDefault>Patient Dashboard</a></li>
-                                </ul>
-                            }
-                        </li>
-                        @if (isAuthenticated)
-                        {
-                            <li><a @onclick="Logout" @onclick:preventDefault>Logout</a></li>
-                        }
-                        else
-                        {
-                            <li class="login-link"><a @onclick='() => NavigateTo("/login")' @onclick:preventDefault>Login / Signup</a></li>
-                        }
-                    </ul>
-
-                }
-            </div>
-            <ul class="nav header-navbar-rht">
-                <li class="nav-item contact-item">
-                    <div class="header-contact-img">
-                        <i class="far fa-hospital"></i>
-                    </div>
-                    <div class="header-contact-detail">
-                        <p class="contact-header">Contact</p>
-                        <p class="contact-info-header">+1 315 369 5943</p>
-                    </div>
-                </li>
-                @if (!isAuthenticated)
-                {
-                    <li class="nav-item">
-                        <a class="nav-link header-login" @onclick:preventDefault @onclick='() => NavigateTo("/signin")'>Login / Signup</a>
-                    </li>
-                }
-                else
-                {
-                    <li class="nav-item dropdown has-arrow logged-item">
-                        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" @onclick="ToggleUserDropdown">
-                            <span class="user-img">
-                                <img class="rounded-circle" src="@(userAvatar ?? "assets/img/doctors/doctor-thumb-02.jpg")" width="31" alt="@userFullName">
-                            </span>
-                        </a>
-                        @if (showUserDropdown)
-                        {
-                            <div class="dropdown-menu dropdown-menu-right show">
-                                <div class="user-header">
-                                    <div class="avatar avatar-sm">
-                                        <img src="@(userAvatar ?? "assets/img/doctors/doctor-thumb-02.jpg")" alt="User Image" class="avatar-img rounded-circle">
-                                    </div>
-                                    <div class="user-text">
-                                        <h6>@(userFullName ?? "Unknown User")</h6>
-                                        <p class="text-muted mb-0">@(userRole ?? "User")</p>
-                                    </div>
-                                </div>
-
-                                @if (userRole == "Expert")
-                                {
-                                    <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/expert-dashboard")'>Expert Dashboard</a>
-                                }
-                                else if (userRole == "Parent")
-                                {
-                                    <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/parent-dashboard")'>Parent Dashboard</a>
-                                }
-                                <a class="dropdown-item" @onclick:preventDefault @onclick='() => NavigateTo("/profile-settings")'>Profile Settings</a>
-                                <a class="dropdown-item" href="#" @onclick="Logout">Logout</a>
-                            </div>
-                        }
-                    </li>
-                }
-            </ul>
-        </nav>
-    </header>
-
-    <!-- Breadcrumb Component -->
     <!-- Page Content -->
     <div class="content">
-        @Body
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-bottom">
-            <div class="container-fluid" style="display: flex; justify-content: center; align-items: center;">
-                <div class="copyright">
-                    <div class="row">
-                        <div class="col-md-12 col-lg-12">
-                            <div class="copyright-menu">
-                                <ul class="policy-menu" style="list-style: none; padding: 0; text-align: center;">
-                                    <li><a href="https://github.com/canxi4589/SP25_SE1709_PRN222_10Kho.git">Project by Team 10Kho</a></li>
-                                </ul>
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Profile Sidebar -->
+                <div class="col-md-5 col-lg-4 col-xl-3 theiaStickySidebar">
+                    <div class="profile-sidebar">
+                        <div class="widget-profile pro-widget-content">
+                            <div class="profile-info-widget">
+                                <a href="#" class="booking-doc-img">
+                                    <img src="@(userAvatar ?? "assets/img/patients/patient.jpg")" alt="User Image">
+                                </a>
+                                <div class="profile-det-info">
+                                    <h3>@(userFullName ?? "Richard Wilson")</h3>
+                                    <div class="patient-details">
+                                        <h5><i class="fas fa-birthday-cake"></i> @(birthDate ?? "24 Jul 1983"), @(age ?? 38) years</h5>
+                                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> @(email ?? string.Empty)</h5>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+                        <div class="dashboard-widget">
+                            <nav class="dashboard-menu">
+                                <ul>
+                                    <li class="@(activeTab == "Dashboard" ? "active" : "")">
+                                        <a @onclick='() => SetActiveTab("Dashboard")'>
+                                            <i class="fas fa-columns"></i>
+                                            <span>Appointments</span>
+                                        </a>
+                                    </li>
+                                    <li class="@(activeTab == "Measurement History" ? "active" : "")">
+                                        <a @onclick='() => SetActiveTab("Measurement History")'>
+                                            <i class="fas fa-bookmark"></i>
+                                            <span>Measurement History</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <li class="@(activeTab == "Parent Profile" ? "active" : "")">
+                                        <a @onclick='() => NavigateToParentProfile()'>
+                                            <i class="fas fa-user"></i>
+                                            <span>Parent Profile</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <li class="@(activeTab == "Password" ? "active" : "")">
+                                        <a @onclick='() => SetActiveTab("Password")'>
+                                            <i class="fas fa-lock"></i>
+                                            <span>Change Password</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a @onclick="Logout">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                            <span>Logout</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
                         </div>
                     </div>
                 </div>
+
+                <!-- Main Content Area -->
+                <div class="col-md-7 col-lg-8 col-xl-9">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <p>Loading profile...</p>
+                        </div>
+                    }
+                    else if (parentProfile != null)
+                    {
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title">Parent Profile</h4>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Full Name:</strong> @parentProfile.FullName</p>
+                                        <p><strong>Email:</strong> @parentProfile.Email</p>
+                                        <p><strong>Status:</strong> @(parentProfile.IsActive ? "Active" : "Inactive")</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Registration Date:</strong> @parentProfile.RegistrationDate.ToString("dd MMM yyyy")</p>
+                                        <p><strong>Last Login:</strong> @(parentProfile.LastLogin?.ToString("dd MMM yyyy HH:mm") ?? "Never")</p>
+                                        <p><strong>Date of Birth:</strong> @(parentProfile.DateOfBirth?.ToString("dd MMM yyyy") ?? "Not specified")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Children</h4>
+                                @if (parentProfile.Children == null || !parentProfile.Children.Any())
+                                {
+                                    <p>No children registered yet.</p>
+                                }
+                                else
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Date of Birth</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var child in parentProfile.Children)
+                                                {
+                                                    <tr>
+                                                        <td>@child.Name</td>
+                                                        <td>@(child.DateOfBirth.ToString("dd MMM yyyy") ?? "Not specified")</td>
+                                                        <td>
+                                                            <button class="btn btn-primary btn-sm" @onclick="() => EditChild(child.Id.Value)">Edit</button>
+                                                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteChild(child.Id.Value)">Delete</button>
+                                                            <button class="btn btn-info btn-sm" @onclick="() => ViewHistory(child.Id.Value)">
+                                                                <i class="fas fa-history"></i> View History
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                <button class="btn btn-success mt-3" @onclick="AddChild">Add New Child</button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <p>Unable to load profile information.</p>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
-    </footer>
+    </div>
+
+
 </div>
 
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/popper.min.js"></script>
+<script src="assets/js/bootstrap.min.js"></script>
+<script src="assets/js/slick.js"></script>
+<script src="assets/js/script.js"></script>
+
 @code {
-    // Existing code remains largely unchanged
     private bool isMobileMenuOpen = false;
     private string? activeMenu = null;
     private bool isAuthenticated = false;
@@ -212,8 +191,16 @@
     private string? userRole = null;
     private string? userAvatar = null;
     private bool showUserDropdown = false;
+    private string activeTab = "Parent Profile"; // Set default to Parent Profile
+    private string? birthDate = null;
+    private int? age = null;
+    private string? email = null;
+    private int unreadMessages = 0;
     public List<BreadcrumbItem> Breadcrumbs { get; set; } = new();
     public string? BreadcrumbTitle { get; set; }
+    private ParentDto? parentProfile;
+    private bool isLoading = true;
+    private Guid? userId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -221,25 +208,31 @@
         var user = authState.User;
         isAuthenticated = user.Identity?.IsAuthenticated ?? false;
 
+
+
         if (isAuthenticated)
         {
             userName = user.Identity?.Name ?? "User";
             userFullName = user.FindFirst("name")?.Value ?? userName;
-            userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "User";
-            userAvatar = user.FindFirst("avatar")?.Value ?? "assets/img/doctors/doctor-thumb-02.jpg";
-            if (user.IsInRole("Parent"))
-            {
-                userRole = "Parent";
-            }
-            else if (user.IsInRole("Expert"))
-            {
-                userRole = "Expert";
-            }
-            else
-            {
-                NavigationManager.NavigateTo("/admin-dashboard", forceLoad: true);
+            userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "Parent";
+            userAvatar = user.FindFirst("avatar")?.Value ?? "assets/img/patients/patient.jpg";
+            birthDate = user.FindFirst("birthdate")?.Value;
+            age = user.FindFirst("age")?.Value != null ? int.Parse(user.FindFirst("age")?.Value) : null;
 
+            // Get user ID from claims (assuming it's stored there)
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userIdClaim, out Guid parsedUserId))
+            {
+                userId = parsedUserId;
+                parentProfile = await ParentProfileService.GetParentProfileAsync(parsedUserId);
+                if (parentProfile != null && parentProfile.Children == null)
+                {
+                    parentProfile.Children = (await ParentProfileService.GetChildrenAsync(parsedUserId)).ToList();
+                }
             }
+            birthDate = parentProfile.DateOfBirth.ToString();
+            age = CalculateAge(birthDate);
+            email = parentProfile.Email;
 
         }
 
@@ -248,30 +241,58 @@
             Breadcrumbs = new List<BreadcrumbItem>
             {
                 new BreadcrumbItem { Text = "Home", Url = "/", IsActive = false },
-                new BreadcrumbItem { Text = "Page", Url = NavigationManager.Uri, IsActive = true }
+                new BreadcrumbItem { Text = "Parent Profile", Url = "/parent-profile", IsActive = true }
             };
-            BreadcrumbTitle = "Page";
+            BreadcrumbTitle = "Parent Profile";
         }
+
+        isLoading = false;
     }
 
     private void ToggleMobileMenu() => isMobileMenuOpen = !isMobileMenuOpen;
-
     private void ToggleSubmenu(string menu) => activeMenu = activeMenu == menu ? null : menu;
-
     private void ToggleUserDropdown() => showUserDropdown = !showUserDropdown;
-
     private void NavigateTo(string uri) => NavigationManager.NavigateTo(uri);
-
+    private void SetActiveTab(string tab) { activeTab = tab; StateHasChanged(); }
+    private void NavigateToParentProfile() => NavigationManager.NavigateTo("/parent-profile");
+    private int CalculateAge(string? birthDateStr)
+    {
+        if (DateTime.TryParse(birthDateStr, out var birth))
+        {
+            var today = DateTime.Today;
+            var age = today.Year - birth.Year;
+            if (birth > today.AddYears(-age)) age--;
+            return age;
+        }
+        return 38;
+    }
     private async Task Logout()
     {
         NavigationManager.NavigateTo("/signout", forceLoad: true);
     }
 
-    public void SetBreadcrumbs(List<BreadcrumbItem> breadcrumbs, string title)
+    private void AddChild()
     {
-        Breadcrumbs = breadcrumbs ?? new List<BreadcrumbItem>();
-        BreadcrumbTitle = title ?? string.Empty;
-        StateHasChanged();
+        // Navigate to a child creation page or implement inline form
+        NavigationManager.NavigateTo("/add-child"); // Assuming there's an add-child page
+    }
+
+    private void EditChild(Guid childId)
+    {
+        // Navigate to child edit page with child ID
+        NavigationManager.NavigateTo($"/edit-child/{childId}");
+    }
+
+    private async Task DeleteChild(Guid childId)
+    {
+        if (userId.HasValue && await ParentProfileService.DeleteChildAsync(childId, userId.Value))
+        {
+            if (parentProfile?.Children != null)
+            {
+                parentProfile.Children = parentProfile.Children.Where(c => c.Id != childId).ToList();
+                StateHasChanged();
+            }
+        }
     }
 
     public class BreadcrumbItem
@@ -280,12 +301,9 @@
         public string Url { get; set; } = "";
         public bool IsActive { get; set; }
     }
+    private void ViewHistory(Guid childId)
+{
+    NavigationManager.NavigateTo($"/parent-dashboard?childId={childId}&tab=MeasurementHistory");
 }
 
-
-
-<script src="assets/js/jquery.min.js"></script>
-<script src="assets/js/popper.min.js"></script>
-<script src="assets/js/bootstrap.min.js"></script>
-<script src="assets/js/slick.js"></script>
-<script src="assets/js/script.js"></script>
+}

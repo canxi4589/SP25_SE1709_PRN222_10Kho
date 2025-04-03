@@ -11,22 +11,26 @@ using MudBlazor.Services;
 using CCP.Service.Integration.BlobStorage;
 using CCP.Service.BackgroundServices;
 
-
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-
 builder.Services.AddHttpClient();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 builder.Services.AddScoped<IMeasurementService, MeasurementService>();
-builder.Services.AddScoped<IExpertService, ExpertService>();
+builder.Services.AddScoped<IParentProfileService, ParentProfileService>(); 
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IMeasurementInputService, MeasurementInputService>();
+
+
+builder.Services.AddScoped<IExpertService, ExpertService>();
+builder.Services.AddScoped<IAppointmentServices, AppointmentServices>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 builder.Services.AddBlobService(config);
@@ -53,6 +57,7 @@ app.MapRazorPages();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
 await app.AddAutoMigrateAndSeedDatabase();
 
 app.Run();

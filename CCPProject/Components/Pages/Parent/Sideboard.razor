@@ -22,7 +22,7 @@
                     <li class="@(ActiveTab == "Dashboard" ? "active" : "")">
                         <a @onclick='() => OnTabSelected.InvokeAsync("Dashboard")'>
                             <i class="fas fa-columns"></i>
-                            <span>Dashboard</span>
+                            <span>Appointments</span>
                         </a>
                     </li>
                     <li class="@(ActiveTab == "Measurement History" ? "active" : "")">
@@ -31,6 +31,14 @@
                             <span>Measurement History</span>
                         </a>
                     </li>
+                    
+                    <li class="@(ActiveTab == "Parent Profile" ? "active" : "")">
+                        <a @onclick='() => NavigateToParentProfile()'>
+                            <i class="fas fa-user"></i>
+                            <span>Parent Profile</span>
+                        </a>
+                    </li>
+               
                     <li class="@(ActiveTab == "Password" ? "active" : "")">
                         <a @onclick='() => OnTabSelected.InvokeAsync("Password")'>
                             <i class="fas fa-lock"></i>
@@ -61,4 +69,9 @@
     [Parameter] public EventCallback OnLogout { get; set; }
 
     private Task Logout() => OnLogout.InvokeAsync();
+
+    private void NavigateToParentProfile()
+    {
+        NavigationManager.NavigateTo("/parent-profile");
+    }
 }

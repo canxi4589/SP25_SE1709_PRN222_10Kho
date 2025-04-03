@@ -1,0 +1,98 @@
+﻿@page "/add-child"
+@using CCPProject.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using CCP.Service
+@using CCP.Service.DTOs
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IParentProfileService ParentProfileService
+@layout Layout1
+
+<div class="main-wrapper">
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0"><i class="fas fa-child me-2"></i>Add New Child</h4>
+                        </div>
+                        <div class="card-body">
+                            <EditForm Model="@newChild" OnValidSubmit="@HandleValidSubmit">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+
+                                <div class="mb-3">
+                                    <label class="form-label">Full Name</label>
+                                    <InputText class="form-control" @bind-Value="newChild.Name" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Gender</label>
+                                    <InputSelect class="form-select" @bind-Value="newChild.Gender">
+                                        <option value="">-- Select Gender --</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </InputSelect>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Date of Birth</label>
+                                    <InputDate class="form-control" @bind-Value="newChild.DateOfBirth" />
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button class="btn btn-success px-4" type="submit" disabled="@isSubmitting">
+                                        <i class="fas fa-plus-circle me-1"></i> Add
+                                    </button>
+                                    <button class="btn btn-outline-secondary px-4" type="button" @onclick="Cancel">
+                                        <i class="fas fa-times me-1"></i> Cancel
+                                    </button>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ChildDto newChild = new();
+    private Guid? userId;
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (Guid.TryParse(userIdClaim, out Guid parsedUserId))
+        {
+            userId = parsedUserId;
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/parent-profile");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (userId.HasValue)
+        {
+            isSubmitting = true;
+            await ParentProfileService.CreateChildAsync(userId.Value, newChild);
+            NavigationManager.NavigateTo("/parent-profile");
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/parent-profile");
+    }
+}
