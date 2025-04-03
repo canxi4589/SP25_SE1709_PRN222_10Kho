@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace CCP.Service
 {
-    public interface IAppointmentService
+    public interface IAppointmentServices
     {
-        Task<IEnumerable<AppointmentDto>> GetAllAppointmentAsync();
+        Task<IEnumerable<AppointmentHistoryDTO>> GetAllAppointmentAsync();
     }
 }

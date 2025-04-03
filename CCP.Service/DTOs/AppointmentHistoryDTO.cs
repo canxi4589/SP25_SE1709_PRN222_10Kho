@@ -17,6 +17,11 @@ namespace CCP.Service.DTOs
         public DateTime BookingDate { get; set; }
         public string Status { get; set; }
         public decimal Price { get; set; }
+        public Guid? MeasurementId { get; set; }
+        public Guid? PhysicalActivityId { get; set; }
+        public Guid? NutritionalIntake { get; set; }
+        public Guid? SleepPatternId { get; set; }
+        public string? Type { get; set; }
         // Optional: Add child name or parent name if needed
         //public string ChildName { get; set; }
         //public string ParentName { get; set; }

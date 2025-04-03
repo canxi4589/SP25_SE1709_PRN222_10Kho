@@ -30,7 +30,7 @@ builder.Services.AddScoped<IMeasurementInputService, MeasurementInputService>();
 
 
 builder.Services.AddScoped<IExpertService, ExpertService>();
-builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IAppointmentServices, AppointmentServices>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 builder.Services.AddBlobService(config);

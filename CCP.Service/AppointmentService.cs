@@ -9,20 +9,20 @@ using System.Threading.Tasks;
 
 namespace CCP.Service
 {
-    public class AppointmentService : IAppointmentService
+    public class AppointmentServices : IAppointmentServices
     {
         private readonly ApplicationDbContext _context;
 
-        public AppointmentService(ApplicationDbContext context)
+        public AppointmentServices(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        public async Task<IEnumerable<AppointmentDto>> GetAllAppointmentAsync()
+        public async Task<IEnumerable<AppointmentHistoryDTO>> GetAllAppointmentAsync()
         {
             var appointments = await _context.Appointments.ToListAsync();
 
-            return appointments.Select(a => new AppointmentDto
+            return appointments.Select(a => new AppointmentHistoryDTO
             {
                 Id = a.Id,
                 ParentId = a.ParentId,

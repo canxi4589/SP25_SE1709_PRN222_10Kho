@@ -10,7 +10,7 @@
 @inject UserManager<AppUser> UserManager
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IAppointmentService AppointmentService
+@inject IAppointmentServices AppointmentServices
 @inject IJSRuntime JSRuntime
 @layout Layout1
 
@@ -40,15 +40,7 @@
                                     <li class="nav-item">
                                         <a class="nav-link @(activeContentTab == "Appointments" ? "active" : "")" @onclick='() => SetContentTab("Appointments")'>Appointments</a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link @(activeContentTab == "Prescriptions" ? "active" : "")" @onclick='() => SetContentTab("Prescriptions")'>Prescriptions</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link @(activeContentTab == "MedicalRecords" ? "active" : "")" @onclick='() => SetContentTab("MedicalRecords")'><span class="med-records">Medical Records</span></a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link @(activeContentTab == "Billing" ? "active" : "")" @onclick='() => SetContentTab("Billing")'>Billing</a>
-                                    </li>
+                                    
                                 </ul>
                             </nav>
 
@@ -493,7 +485,7 @@
     private string activeTab = "Dashboard";
     private string activeContentTab = "Appointments";
     private int unreadMessages = 23;
-    private List<AppointmentDto> Appointments { get; set; } = new();
+    private List<AppointmentHistoryDTO> Appointments { get; set; } = new();
     private bool isLoadingAppointments = true;
     [Parameter] public Guid ChildId { get; set; }
     private List<Child> children = new();
@@ -526,7 +518,7 @@
             age = CalculateAge(birthDate);
 
             // Load appointments
-            var allAppointments = await AppointmentService.GetAllAppointmentAsync();
+            var allAppointments = await AppointmentServices.GetAllAppointmentAsync();
             Appointments = allAppointments.Where(a => a.ParentId == parent.Id).ToList();
             isLoadingAppointments = false;
         }
@@ -574,9 +566,9 @@
 
     private async Task Logout() => NavigationManager.NavigateTo("/signout", forceLoad: true);
 
-    private async Task Print(AppointmentDto item) => await JSRuntime.InvokeVoidAsync("window.print");
+    private async Task Print(AppointmentHistoryDTO item) => await JSRuntime.InvokeVoidAsync("window.print");
 
-    private void View(AppointmentDto item) => Console.WriteLine($"Viewing appointment for Child ID: {item.ChildId}");
+    private void View(AppointmentHistoryDTO item) => Console.WriteLine($"Viewing appointment for Child ID: {item.ChildId}");
 
     private string GetStatusClass(string status)
     {

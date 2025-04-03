@@ -9,7 +9,7 @@ namespace CCP.Service.DTOs
     public class HealthMetricDTO
     {
         public DateTime MetricDate { get; set; }
-
+        public Guid? Id { get; set; }
         public float? Temperature { get; set; }
         public int? HeartRate { get; set; }
         public string? BloodPressure { get; set; }
