@@ -1,6 +1,7 @@
 using CCP.Repositori.Repository;
 using CCP.Service;
 using CCP.Service.EmailService;
+using CCP.Services;
 using CCPProject.Components;
 using CCPProject.Extension;
 using HCP.Repository.DatabaseExtension;
@@ -19,6 +20,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 builder.Services.AddScoped<IMeasurementService, MeasurementService>();
+builder.Services.AddScoped<IExpertService1,ExpertService1>();
 builder.Services.AddDatabaseConfig(config);
 builder.Services.AddIdentityService(config);
 builder.Services.AddHttpContextAccessor();

@@ -9,6 +9,7 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @layout Layout1
+
 <div class="content">
     <div class="container-fluid">
         <div class="row">
@@ -26,22 +27,6 @@
                             </div>
                         </div>
 
-                        <!-- Gender Filter -->
-                        <div class="filter-widget">
-                            <h4>Gender</h4>
-                            <div>
-                                <label class="custom_check">
-                                    <input type="checkbox" name="gender_type" @bind="filterMale" />
-                                    <span class="checkmark"></span> Male Doctor
-                                </label>
-                            </div>
-                            <div>
-                                <label class="custom_check">
-                                    <input type="checkbox" name="gender_type" @bind="filterFemale" />
-                                    <span class="checkmark"></span> Female Doctor
-                                </label>
-                            </div>
-                        </div>
 
                         <!-- Specialty Filter -->
                         <div class="filter-widget">
@@ -90,7 +75,7 @@
                                         </div>
                                         <div class="doc-info-cont">
                                             <h4 class="doc-name"><a href="@($"/expert-profile/{doctor.UserId}")">Dr. @doctor.Name</a></h4>
-                                            <p class="doc-speciality">MBBS, MD</p> <!-- Replace with actual qualifications if stored -->
+                                            <p class="doc-speciality">MBBS, MD</p> 
                                             <h5 class="doc-department">
                                                 <img src="@GetSpecialtyIcon(doctor.Specialty.Name)" class="img-fluid" alt="Speciality"> @doctor.Specialty.Name
                                             </h5>
@@ -150,8 +135,6 @@
 
 @code {
     private string? selectedDate;
-    private bool filterMale = false;
-    private bool filterFemale = false;
     private List<Specialty> availableSpecialties = new();
     private Dictionary<string, bool> specialtyFilters = new();
     private List<Expert> allDoctors = new();
@@ -161,18 +144,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Load specialties from the database
         availableSpecialties = await DbContext.Specialties.ToListAsync();
-        foreach (var specialty in availableSpecialties)
-        {
-            specialtyFilters[specialty.Name] = false; // Initialize all unchecked
-        }
-        specialtyFilters["Urology"] = false; // Default checked
-        specialtyFilters["Neurology"] = false; // Default checked
+        
+        specialtyFilters = availableSpecialties
+            .ToDictionary(s => s.Name, s => false);
 
-        // Fetch experts from UserManager and DbContext
         await LoadDoctors();
-        ApplyFilters(); // Initial filter application
+        ApplyFilters();
     }
 
     private async Task LoadDoctors()
@@ -185,22 +163,29 @@
             .Include(e => e.Specialty)
             .Where(e => expertIds.Contains(e.UserId))
             .Select(e => new Expert
-                {
-                    UserId = e.UserId,
-                    Name = e.Name,
-                    Specialty = e.Specialty,
-                    Price = e.Price,
-                    ContactInfo = e.ContactInfo ?? "Not provided",
-                    Certificate = e.Certificate ?? "hehe",
-                    User = e.User,
-                    // Simulated data for display (replace with actual data if available)
-                    Avatar = $"assets/img/doctors/doctor-thumb-{new Random().Next(1, 7):D2}.jpg",
-                    Rating = new Random().Next(3, 5),
-                    FeedbackCount = new Random().Next(4, 52),
-                    Location = "USA", // Replace with actual user location if stored
-                    ClinicPhotos = new List<string> { "assets/img/features/feature-01.jpg", "assets/img/features/feature-02.jpg", "assets/img/features/feature-03.jpg", "assets/img/features/feature-04.jpg" },
-                    ApprovalRating = new Random().Next(90, 100),
-                })
+            {
+                UserId = e.UserId,
+                Name = e.Name,
+                Specialty = e.Specialty,
+                Price = e.Price,
+                ContactInfo = e.ContactInfo ?? "Not provided",
+                Certificate = e.Certificate ?? "Not specified",
+                User = e.User,
+                ExpertAvailabilities = e.ExpertAvailabilities,
+                // UI properties
+                Avatar = $"https://people.com/thmb/8QOJNDgpfbWvi-LbzGF3knEjXTU=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc():focal(999x0:1001x2)/freddie-highmore-the-good-doctor-052024-2-2326544596844dc2869c5ec4a2f2f684.jpg",
+                Rating = new Random().Next(3, 5),
+                FeedbackCount = new Random().Next(4, 52),
+                Location = "USA",
+                ClinicPhotos = new List<string> 
+                { 
+                    "assets/img/features/feature-01.jpg", 
+                    "assets/img/features/feature-02.jpg", 
+                    "assets/img/features/feature-03.jpg", 
+                    "assets/img/features/feature-04.jpg" 
+                },
+                ApprovalRating = new Random().Next(90, 100),
+            })
             .ToListAsync();
 
         filteredDoctors = allDoctors.Take(pageSize).ToList();
@@ -210,19 +195,25 @@
     {
         var filtered = allDoctors.AsEnumerable();
 
+        // Filter by selected specialties
+        var selectedSpecialties = specialtyFilters
+            .Where(kv => kv.Value)
+            .Select(kv => kv.Key)
+            .ToList();
 
-        // if (filterMale && !filterFemale)
-        //     filtered = filtered.Where(d => d.Name.Contains("Dr.")); 
-        // else if (!filterMale && filterFemale)
-        //     filtered = filtered.Where(d => !d.Name.Contains("Dr.")); 
+        if (selectedSpecialties.Any())
+        {
+            filtered = filtered.Where(d => 
+                d.Specialty != null && 
+                selectedSpecialties.Contains(d.Specialty.Name));
+        }
 
-        // Filter by specialty
-        // var selectedSpecialties = specialtyFilters.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
-        // if (selectedSpecialties.Any())
-        //     filtered = filtered.Where(d => selectedSpecialties.Contains(d.Specialty.Name));
+        // Apply pagination
+        filteredDoctors = filtered
+            .Take(pageSize * currentPage)
+            .ToList();
 
-        // filteredDoctors = filtered.Take(pageSize * currentPage).ToList();
-        // StateHasChanged();
+        StateHasChanged();
     }
 
     private void LoadMore()
@@ -244,7 +235,6 @@
         };
     }
 
-    // Doctor model for display purposes (subset of Expert with additional UI data)
     public class Expert
     {
         public string UserId { get; set; }
@@ -255,8 +245,7 @@
         public string Certificate { get; set; }
         public AppUser User { get; set; }
         public ICollection<ExpertAvailability> ExpertAvailabilities { get; set; }
-
-        // UI-specific properties (simulated for now)
+        // UI-specific properties
         public string Avatar { get; set; }
         public int Rating { get; set; }
         public int FeedbackCount { get; set; }
@@ -264,4 +253,4 @@
         public List<string> ClinicPhotos { get; set; }
         public int ApprovalRating { get; set; }
     }
-}
+    }
