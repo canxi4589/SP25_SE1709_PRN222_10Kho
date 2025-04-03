@@ -160,7 +160,7 @@ namespace CCP.Service
                 Name = c.Name,
                 Gender = c.Gender,
                 DateOfBirth = c.DateOfBirth,
-                PhysicalActivities = c.PhysicalActivities?.Select(pa => new PhysicalActivityDto
+                PhysicalActivities = c.PhysicalActivities?.Select(pa => new PhysicalActivityDTO
                 {
                     Id = pa.Id,
                     RecordDate = pa.RecordDate,
@@ -189,7 +189,7 @@ namespace CCP.Service
                     Status = n.Status,
                     FoodItemId = n.FoodItemId
                 }).ToList(),
-                HealthMetrics = c.HealthMetrics?.Select(h => new HealthMetricDto
+                HealthMetrics = c.HealthMetrics?.Select(h => new HealthMetricDTO
                 {
                     Id = h.Id,
                     MetricDate = h.MetricDate,
